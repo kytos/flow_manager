@@ -1,4 +1,0 @@
-python-openflow>=2017.1b3
-rrdtool
-flask
-kytos>=2017.1b3

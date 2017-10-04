@@ -1,2 +1,0 @@
-flask
-kytos>=2017.1b3

@@ -1,1 +1,0 @@
-"""Kytos NApps module."""
