@@ -6,9 +6,6 @@ from flask import request
 
 from kytos.core import KytosEvent, KytosNApp, log, rest
 
-from pyof.v0x01.controller2switch.flow_mod import FlowModCommand
-
-from napps.kytos.of_core.flow import Flow
 from napps.kytos.of_flow_manager import settings
 
 
@@ -99,60 +96,21 @@ class Main(KytosNApp):
         return json.dumps({"response": "FlowMod Messages Sent"}), 202
 
 
-class FlowManager(object):
+class FlowParser(object):
     """Class responsible for manipulating flows at the switches."""
 
-    def __init__(self, controller):
-        """Init method."""
-        self.controller = controller
+    def flowmod10_from_dict():
+        """Return an OF1.0 FlowMod message created from input dictionary."""
+        pass
 
-    def install_new_flow(self, flow, dpid):
-        """Create a new flow_mod message.
+    def flow10_as_dict():
+        """Return a dictionary created from input 1.0 switch's flows."""
+        pass
 
-        This method is responsible for creating a new flow_mod message from
-        the Flow object received.
-        """
-        switch = self.controller.get_switch_by_dpid(dpid)
-        flow_mod = flow.as_flow_mod(FlowModCommand.OFPFC_ADD)
+    def flowmod13_from_dict():
+        """Return an OF1.3 FlowMod message created from input dictionary."""
+        pass
 
-        event_out = KytosEvent(name=('kytos/of_flow-manager.messages.out.'
-                                     'ofpt_flow_mod'),
-                               content={'destination': switch.connection,
-                                        'message': flow_mod})
-        self.controller.buffers.msg_out.put(event_out)
-
-    def clear_flows(self, dpid):
-        """Clear all flows from switch identified by dpid."""
-        switch = self.controller.get_switch_by_dpid(dpid)
-        for flow in switch.flows:
-            flow_mod = flow.as_flow_mod(FlowModCommand.OFPFC_DELETE)
-            event_out = KytosEvent(name=('kytos/of_flow-manager.messages.out.'
-                                         'ofpt_flow_mod'),
-                                   content={'destination': switch.connection,
-                                            'message': flow_mod})
-            self.controller.buffers.msg_out.put(event_out)
-
-    def delete_flow(self, flow_id, dpid):
-        """Remove a flow from a switch identified by id and dpid."""
-        switch = self.controller.get_switch_by_dpid(dpid)
-        for flow in switch.flows:
-            if flow.id == flow_id:
-                flow_mod = flow.as_flow_mod(FlowModCommand.OFPFC_DELETE)
-                content = {'destination': switch.connection,
-                           'message': flow_mod}
-                event_out = KytosEvent(name=('kytos/of_flow-manager.'
-                                             'messages.out.ofpt_flow_mod'),
-                                       content=content)
-                self.controller.buffers.msg_out.put(event_out)
-
-    @staticmethod
-    def _get_flows(flow_stats):
-        """Create a lista of flows.
-
-        Creates a list of flows from the body of a flow_stats_reply message.
-        """
-        flows = []
-        for flow_stat in flow_stats:
-            flows.append(Flow.from_flow_stats(flow_stat))
-
-        return flows
+    def flow13_as_dict():
+        """Return a dictionary created from input 1.3 switch's flows."""
+        pass
