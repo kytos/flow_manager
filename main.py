@@ -6,6 +6,9 @@ from flask import request
 
 from kytos.core import KytosEvent, KytosNApp, log, rest
 
+from pyof.v0x01.common.action import ActionOutput, ActionType, ActionVlanVid
+from pyof.v0x01.controller2switch.flow_mod import FlowMod as FlowMod10
+
 from napps.kytos.of_flow_manager import settings
 
 
@@ -18,7 +21,6 @@ class Main(KytosNApp):
         The setup method is automatically called by the run method.
         Users shouldn't call this method directly.
         """
-        self.flow_manager = FlowManager(self.controller)
 
     def execute(self):
         """Method to be runned once on app 'start' or in a loop.
@@ -99,13 +101,56 @@ class Main(KytosNApp):
 class FlowParser(object):
     """Class responsible for manipulating flows at the switches."""
 
-    def flowmod10_from_dict():
-        """Return an OF1.0 FlowMod message created from input dictionary."""
-        pass
+    flow_attributes = ['table_id', 'priority', 'idle_timeout', 'hard_timeout',
+                       'cookie']
+    match_attributes = ['in_port', 'dl_src', 'dl_dst', 'dl_type', 'dl_vlan',
+                        'dl_vlan_pcp']
 
-    def flow10_as_dict():
+    def flowmod10_from_dict(self, dictionary):
+        """Return an OF1.0 FlowMod message created from input dictionary."""
+
+        flow_mod = FlowMod10()
+
+        for field, data in dictionary.items():
+            if field in self.flow_attributes:
+                setattr(flow_mod, field, data)
+            elif field == 'match':
+                for match_field, match_data in data.items():
+                    if match_field in self.match_attributes:
+                        setattr(flow_mod.match, match_field, match_data)
+            elif field == 'actions':
+                for action_type, action_data in data.items():
+                    if action_type == 'set_vlan':
+                        action = ActionVlanVid(vlan_id=action_data)
+                        flow_mod.actions.append(action)
+                    elif action_type == 'output':
+                        action = ActionOutput(port=action_data)
+                        flow_mod.actions.append(action)
+
+        return flow_mod
+
+
+    def flow10_as_dict(self, flowstats):
         """Return a dictionary created from input 1.0 switch's flows."""
-        pass
+
+        flow_dict = {}
+        for field, data in vars(flowstats).items():
+            if field in self.flow_attributes:
+                flow_dict[field] = data.value
+
+        flow_dict['match'] = {}
+        for field, data in vars(flowstats.match).items():
+            if field in self.match_attributes:
+                flow_dict['match'][field] = data.value
+
+        flow_dict['actions'] = {}
+        for action in flowstats.actions:
+            if action.action_type == ActionType.OFPAT_SET_VLAN_VID:
+                flow_dict['actions']['set_vlan'] = action.vlan_id.value
+            elif action.action_type == ActionType.OFPAT_OUTPUT:
+                flow_dict['actions']['output'] = action.port.value
+
+        return flow_dict
 
     def flowmod13_from_dict():
         """Return an OF1.3 FlowMod message created from input dictionary."""
