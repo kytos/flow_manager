@@ -91,8 +91,6 @@ class Main(KytosNApp):
         for switch_dpid in target:
             switch = self.controller.get_switch_by_dpid(switch_dpid)
             for flow in json_content:
-                print(flow)
-                print(type(flow))
                 if switch.connection.protocol.version == 0x04:
                     flow_mod = self.parser.flowmod13_from_dict(flow)
                 else:
@@ -109,23 +107,35 @@ class Main(KytosNApp):
 
         return json.dumps({"response": "FlowMod Messages Sent"}), 201
 
-    @rest('flows', methods=['DELETE'])
-    @rest('flows/<dpid>', methods=['DELETE'])
-    @rest('flows/<dpid>/<flow_id>', methods=['DELETE'])
-    def delete_flows(self, flow_id=None, dpid=None):
-        """Delete a flow from a switch identified by flow_id and dpid.
+    @rest('del-flows', methods=['POST'])
+    @rest('del-flows/<dpid>', methods=['POST'])
+    def delete_flows(self, dpid=None):
+        """Delete existing flows in the switch identified by dpid.
 
-        If no flow_id has been specified, removes all flows from the switch.
-        If no dpid or flow_id  has been specified, removes all flows from all
-        switches.
+        If no dpid has been specified, delete flows from all switches.
         """
-        if flow_id:
-            self.flow_manager.delete_flow(flow_id, dpid)
-        elif dpid:
-            self.flow_manager.clear_flows(dpid)
+        if dpid:
+            target = [dpid]
         else:
-            for switch_dpid in self.controller.switches:
-                self.flow_manager.clear_flows(switch_dpid)
+            target = self.controller.switches
+
+        json_content = request.get_json()
+        for switch_dpid in target:
+            switch = self.controller.get_switch_by_dpid(switch_dpid)
+            for flow in json_content:
+                if switch.connection.protocol.version == 0x04:
+                    flow_mod = self.parser.flowmod13_from_dict(flow)
+                else:
+                    flow_mod = self.parser.flowmod10_from_dict(flow)
+
+                flow_mod.command = FlowModCommand.OFPFC_DELETE
+
+                event = KytosEvent(name=('kytos/of_flow_manager.messages.out.'
+                                   'ofpt_flow_mod'),
+                                   content={'destination': switch.connection,
+                                            'message': flow_mod})
+
+                self.controller.buffers.msg_out.put(event)
 
         return json.dumps({"response": "FlowMod Messages Sent"}), 202
 
