@@ -6,8 +6,20 @@ from flask import request
 
 from kytos.core import KytosEvent, KytosNApp, log, rest
 
-from pyof.v0x01.common.action import ActionOutput, ActionType, ActionVlanVid
+from pyof.foundation.network_types import HWAddress
+
+from pyof.v0x01.common.action import (ActionOutput as ActionOutput10,
+                                      ActionType as ActionType10,
+                                      ActionVlanVid)
 from pyof.v0x01.controller2switch.flow_mod import FlowMod as FlowMod10
+
+from pyof.v0x04.common.action import (ActionOutput as ActionOutput13,
+                                      ActionSetField, ActionType as
+                                      ActionType13)
+from pyof.v0x04.common.flow_instructions import (InstructionApplyAction,
+                                                 InstructionType as IType)
+from pyof.v0x04.common.flow_match import OxmOfbMatchField, OxmTLV, VlanId
+from pyof.v0x04.controller2switch.flow_mod import FlowMod as FlowMod13
 
 from napps.kytos.of_flow_manager import settings
 
@@ -103,8 +115,13 @@ class FlowParser(object):
 
     flow_attributes = ['table_id', 'priority', 'idle_timeout', 'hard_timeout',
                        'cookie']
-    match_attributes = ['in_port', 'dl_src', 'dl_dst', 'dl_type', 'dl_vlan',
-                        'dl_vlan_pcp']
+    match_attributes = {'in_port': OxmOfbMatchField.OFPXMT_OFB_IN_PORT,
+                        'dl_src': OxmOfbMatchField.OFPXMT_OFB_ETH_SRC,
+                        'dl_dst': OxmOfbMatchField.OFPXMT_OFB_ETH_DST,
+                        'dl_type': OxmOfbMatchField.OFPXMT_OFB_ETH_TYPE,
+                        'dl_vlan': OxmOfbMatchField.OFPXMT_OFB_VLAN_VID,
+                        'dl_vlan_pcp': OxmOfbMatchField.OFPXMT_OFB_VLAN_PCP}
+    match_13to10 = {b: a for a, b in match_attributes.items()}
 
     def flowmod10_from_dict(self, dictionary):
         """Return an OF1.0 FlowMod message created from input dictionary."""
@@ -124,11 +141,10 @@ class FlowParser(object):
                         action = ActionVlanVid(vlan_id=action_data)
                         flow_mod.actions.append(action)
                     elif action_type == 'output':
-                        action = ActionOutput(port=action_data)
+                        action = ActionOutput10(port=action_data)
                         flow_mod.actions.append(action)
 
         return flow_mod
-
 
     def flow10_as_dict(self, flowstats):
         """Return a dictionary created from input 1.0 switch's flows."""
@@ -145,17 +161,88 @@ class FlowParser(object):
 
         flow_dict['actions'] = {}
         for action in flowstats.actions:
-            if action.action_type == ActionType.OFPAT_SET_VLAN_VID:
+            if action.action_type == ActionType10.OFPAT_SET_VLAN_VID:
                 flow_dict['actions']['set_vlan'] = action.vlan_id.value
-            elif action.action_type == ActionType.OFPAT_OUTPUT:
+            elif action.action_type == ActionType10.OFPAT_OUTPUT:
                 flow_dict['actions']['output'] = action.port.value
 
         return flow_dict
 
-    def flowmod13_from_dict():
+    def flowmod13_from_dict(self, dictionary):
         """Return an OF1.3 FlowMod message created from input dictionary."""
-        pass
 
-    def flow13_as_dict():
+        flow_mod = FlowMod13()
+        instruction = InstructionApplyAction()
+        flow_mod.instructions.append(instruction)
+
+        for field, data in dictionary.items():
+            if field in self.flow_attributes:
+                setattr(flow_mod, field, data)
+            elif field == 'match':
+                for match_field, match_data in data.items():
+                    if match_field in self.match_attributes:
+                        tlv = OxmTLV()
+                        tlv.oxm_field = self.match_attributes[match_field]
+                        if match_field == 'dl_vlan_pcp':
+                            tlv.oxm_value = match_data.to_bytes(1, 'big')
+                        elif match_field == 'dl_vlan':
+                            vid = match_data | VlanId.OFPVID_PRESENT
+                            tlv.oxm_value = vid.to_bytes(2, 'big')
+                        elif match_field in ('dl_src', 'dl_dst'):
+                            addr = HWAddress(match_data)
+                            tlv.oxm_value = addr.pack()
+                        else:
+                            tlv.oxm_value = match_data.to_bytes(2, 'big')
+
+                        flow_mod.match.oxm_match_fields.append(tlv)
+
+            elif field == 'actions':
+                for action_type, action_data in data.items():
+                    if action_type == 'set_vlan':
+                        tlv = OxmTLV()
+                        tlv.oxm_field = OxmOfbMatchField.OFPXMT_OFB_VLAN_VID
+                        vid = action_data | VlanId.OFPVID_PRESENT
+                        tlv.oxm_value = vid.to_bytes(2, 'big')
+                        action = ActionSetField(field=tlv)
+                        instruction.actions.append(action)
+                    elif action_type == 'output':
+                        action = ActionOutput13(port=action_data)
+                        instruction.actions.append(action)
+
+        return flow_mod
+
+    def flow13_as_dict(self, flowstats):
         """Return a dictionary created from input 1.3 switch's flows."""
-        pass
+
+        flow_dict = {}
+        for field, data in vars(flowstats).items():
+            if field in self.flow_attributes:
+                flow_dict[field] = data.value
+
+        flow_dict['match'] = {}
+        for field in flowstats.match.oxm_match_fields:
+            if field.oxm_field in self.match_13to10:
+                match_field = self.match_13to10.get(field.oxm_field)
+                if match_field == 'dl_vlan':
+                    data = int.from_bytes(field.oxm_value, 'big') & 4095
+                elif match_field in ('dl_src', 'dl_dst'):
+                    addr = HWAddress()
+                    addr.unpack(field.oxm_value)
+                    data = str(addr)
+                else:
+                    data = int.from_bytes(field.oxm_value, 'big')
+                flow_dict['match'][match_field] = data
+
+        flow_dict['actions'] = {}
+        for instruction in flowstats.instructions:
+            if instruction.instruction_type == IType.OFPIT_APPLY_ACTIONS:
+                for action in instruction.actions:
+                    if action.action_type == ActionType13.OFPAT_SET_FIELD:
+                        if action.field.oxm_field == OxmOfbMatchField.OFPXMT_OFB_VLAN_VID:
+                            data = int.from_bytes(action.field.oxm_value,
+                                                  'big') & 4095
+                        flow_dict['actions']['set_vlan'] = data
+                    elif action.action_type == ActionType13.OFPAT_OUTPUT:
+                        flow_dict['actions']['output'] = action.port.value
+
+        return flow_dict
