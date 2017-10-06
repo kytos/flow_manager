@@ -11,7 +11,8 @@ from pyof.foundation.network_types import HWAddress
 from pyof.v0x01.common.action import (ActionOutput as ActionOutput10,
                                       ActionType as ActionType10,
                                       ActionVlanVid)
-from pyof.v0x01.controller2switch.flow_mod import FlowMod as FlowMod10
+from pyof.v0x01.controller2switch.flow_mod import (FlowMod as FlowMod10,
+                                                   FlowModCommand)
 
 from pyof.v0x04.common.action import (ActionOutput as ActionOutput13,
                                       ActionSetField, ActionType as
@@ -74,22 +75,37 @@ class Main(KytosNApp):
             switch_flows[switch_dpid] = flows
         return json.dumps(switch_flows)
 
-    @rest('flows', methods=['POST'])
-    @rest('flows/<dpid>', methods=['POST'])
+    @rest('add-flows', methods=['POST'])
+    @rest('add-flows/<dpid>', methods=['POST'])
     def insert_flows(self, dpid=None):
         """Install new flows in the switch identified by dpid.
 
         If no dpid has been specified, install flows in all switches.
         """
+        if dpid:
+            target = [dpid]
+        else:
+            target = self.controller.switches
+
         json_content = request.get_json()
-        for json_flow in json_content:
-            received_flow = Flow.from_dict(json_flow)
-            if dpid:
-                self.flow_manager.install_new_flow(received_flow, dpid)
-            else:
-                for switch_dpid in self.controller.switches:
-                    self.flow_manager.install_new_flow(received_flow,
-                                                       switch_dpid)
+        for switch_dpid in target:
+            switch = self.controller.get_switch_by_dpid(switch_dpid)
+            for flow in json_content:
+                print(flow)
+                print(type(flow))
+                if switch.connection.protocol.version == 0x04:
+                    flow_mod = self.parser.flowmod13_from_dict(flow)
+                else:
+                    flow_mod = self.parser.flowmod10_from_dict(flow)
+
+                flow_mod.command = FlowModCommand.OFPFC_ADD
+
+                event = KytosEvent(name=('kytos/of_flow_manager.messages.out.'
+                                   'ofpt_flow_mod'),
+                                   content={'destination': switch.connection,
+                                            'message': flow_mod})
+
+                self.controller.buffers.msg_out.put(event)
 
         return json.dumps({"response": "FlowMod Messages Sent"}), 201
 
@@ -195,6 +211,8 @@ class FlowParser(object):
                         elif match_field in ('dl_src', 'dl_dst'):
                             addr = HWAddress(match_data)
                             tlv.oxm_value = addr.pack()
+                        elif match_field == 'in_port':
+                            tlv.oxm_value = match_data.to_bytes(4, 'big')
                         else:
                             tlv.oxm_value = match_data.to_bytes(2, 'big')
 
