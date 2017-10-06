@@ -33,6 +33,8 @@ class Main(KytosNApp):
         The setup method is automatically called by the run method.
         Users shouldn't call this method directly.
         """
+        self.parser = FlowParser()
+        log.debug("flow-manager starting")
 
     def execute(self):
         """Method to be runned once on app 'start' or in a loop.
@@ -62,11 +64,13 @@ class Main(KytosNApp):
 
         for switch_dpid in target:
             switch = self.controller.get_switch_by_dpid(switch_dpid)
-            flows = {}
+            flows = []
             for flow in switch.flows:
-                flow = (flow.as_dict()['flow'])
-                flow_id = flow.pop('self.id', 0)
-                flows[flow_id] = flow
+                if switch.connection.protocol.version == 0x04:
+                    flow_dict = self.parser.flow13_as_dict(flow)
+                else:
+                    flow_dict = self.parser.flow10_as_dict(flow)
+                flows.append(flow_dict)
             switch_flows[switch_dpid] = flows
         return json.dumps(switch_flows)
 
