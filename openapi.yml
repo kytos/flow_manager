@@ -19,13 +19,13 @@ paths:
       tags:
         - List
       summary: Retrieve a list of all flows from all known datapaths.
-      produces:
-        - application/json
       responses:
         '200':
           description: Operation Successful.
-          schema:
-            $ref: '#/definitions/ResponseExample'
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/ResponseExample'
   '/api/kytos/of_flow_manager/flows/{dpid}':
     get:
       tags:
@@ -37,13 +37,13 @@ paths:
           required: true
           type: string
           description: DPID of the target datapath.
-      produces:
-        - application/json
       responses:
         '200':
           description: Operation Successful.
-          schema:
-            $ref: '#/definitions/ResponseExample'
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/ResponseExample'
   /api/kytos/of_flow_manager/add-flows:
     post:
       tags:
@@ -60,11 +60,10 @@ paths:
               $ref: '#/definitions/SetFlowExample'
       consumes:
         - application/json
-      produces:
-        - application/json
       responses:
         '201':
-          description: FlowMod messages sent.
+           description: FlowMod messages sent.
+
   '/api/kytos/of_flow_manager/add-flows/{dpid}':
     post:
       tags:
@@ -86,8 +85,6 @@ paths:
           description: DPID of the target datapath.
       consumes:
         - application/json
-      produces:
-        - application/json
       responses:
         '201':
           description: FlowMod messages sent.
@@ -106,8 +103,6 @@ paths:
             items:
               $ref: '#/definitions/DeleteFlowExample'
       consumes:
-        - application/json
-      produces:
         - application/json
       responses:
         '202':
@@ -132,8 +127,6 @@ paths:
           type: string
           description: DPID of the target datapath.
       consumes:
-        - application/json
-      produces:
         - application/json
       responses:
         '202':
