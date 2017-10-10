@@ -1,0 +1,237 @@
+openapi: '3.0.0'
+info:
+  title: kytos/of_flow_manager
+  version: 0.1.3
+  description: >-
+    **Warning**: *This documentation is experimental and may change soon.*
+
+
+    Manages flows for OpenFlow switches, for versions 1.0 and 1.3. Can add, list
+    and remove flows from datapaths. Currently supports a subset of available
+    matches and actions from the OpenFlow specification.
+tags:
+  - name: List
+  - name: Add
+  - name: Delete
+paths:
+  /api/kytos/of_flow_manager/flows:
+    get:
+      tags:
+        - List
+      summary: Retrieve a list of all flows from all known datapaths.
+      responses:
+        '200':
+          description: Operation Successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/ResponseExample'
+  '/api/kytos/of_flow_manager/flows/{dpid}':
+    get:
+      tags:
+        - List
+      summary: Retrieve a list of all flows from a single datapath.
+      parameters:
+        - name: dpid
+          in: path
+          required: true
+          type: string
+          description: DPID of the target datapath.
+      responses:
+        '200':
+          description: Operation Successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/ResponseExample'
+  /api/kytos/of_flow_manager/add-flows:
+    post:
+      tags:
+        - Add
+      summary: Insert flows in all known datapaths.
+      parameters:
+        - in: body
+          name: body
+          description: List of flows to be inserted.
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SetFlowExample'
+      consumes:
+        - application/json
+      responses:
+        '201':
+           description: FlowMod messages sent.
+
+  '/api/kytos/of_flow_manager/add-flows/{dpid}':
+    post:
+      tags:
+        - Add
+      summary: Insert flows in a single datapath.
+      parameters:
+        - in: body
+          name: body
+          description: List of flows to be inserted.
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SetFlowExample'
+        - name: dpid
+          in: path
+          required: true
+          type: string
+          description: DPID of the target datapath.
+      consumes:
+        - application/json
+      responses:
+        '201':
+          description: FlowMod messages sent.
+  /api/kytos/of_flow_manager/del-flows:
+    post:
+      tags:
+        - Delete
+      summary: Remove flows from all known datapaths.
+      parameters:
+        - in: body
+          name: body
+          description: List of flows to be removed.
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DeleteFlowExample'
+      consumes:
+        - application/json
+      responses:
+        '202':
+          description: FlowMod messages sent.
+  '/api/kytos/of_flow_manager/del-flows/{dpid}':
+    post:
+      tags:
+        - Delete
+      summary: Remove flows from a single datapath.
+      parameters:
+        - in: body
+          name: body
+          description: List of flows to be removed.
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DeleteFlowExample'
+        - name: dpid
+          in: path
+          required: true
+          type: string
+          description: DPID of the target datapath.
+      consumes:
+        - application/json
+      responses:
+        '202':
+          description: FlowMod messages sent.
+definitions:
+  MatchExample:
+    type: object
+    properties:
+      in_port:
+        type: integer
+        format: int64
+        example: 2
+      dl_src:
+        type: string
+        example: '00:1f:3a:3e:9a:cf'
+      dl_dst:
+        type: string
+        example: '00:15:af:d5:38:98'
+      dl_type:
+        type: integer
+        format: int64
+        example: 2048
+      dl_vlan:
+        type: integer
+        format: int64
+        example: 300
+      dl_vlan_pcp:
+        type: integer
+        format: int64
+        example: 0
+  ActionsExample:
+    type: object
+    properties:
+      set_vlan:
+        type: integer
+        format: int64
+        example: 450
+      output:
+        type: integer
+        format: int64
+        example: 3
+  FlowExample:
+    type: object
+    properties:
+      table_id:
+        type: integer
+        format: int64
+        example: 0
+      priority:
+        type: integer
+        format: int64
+        example: 10
+      idle_timeout:
+        type: integer
+        format: int64
+        example: 360
+      hard_timeout:
+        type: integer
+        format: int64
+        example: 1200
+      cookie:
+        type: integer
+        format: int64
+        example: 84114904
+      match:
+        $ref: '#/definitions/MatchExample'
+      actions:
+        $ref: '#/definitions/ActionsExample'
+  ResponseExample:
+    type: object
+    properties:
+      '00:00:00:00:00:00:00:01':
+        type: array
+        items:
+          $ref: '#/definitions/FlowExample'
+  SetMatchExample:
+    type: object
+    properties:
+      in_port:
+        type: integer
+        format: int64
+        example: 5
+      dl_vlan:
+        type: integer
+        format: int64
+        example: 110
+  SetFlowExample:
+    type: object
+    properties:
+      priority:
+        type: integer
+        format: int64
+        example: 10
+      cookie:
+        type: integer
+        format: int64
+        example: 40941148
+      match:
+        $ref: '#/definitions/SetMatchExample'
+      actions:
+        $ref: '#/definitions/ActionsExample'
+  DeleteFlowExample:
+    type: object
+    properties:
+      cookie:
+        type: integer
+        format: int64
+        example: 84114904
