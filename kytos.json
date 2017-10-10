@@ -3,7 +3,7 @@
   "username": "kytos",
   "name": "of_flow_manager",
   "description": "Manage switches' flows through a REST API.",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "napp_dependencies": ["kytos/of_core"],
   "license": "MIT",
   "url": "https://github.com/kytos/flow_manager.git",
