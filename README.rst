@@ -17,7 +17,7 @@ it is only necessary to know the endpoints. The application handles
 the requests and return the information already formatted.
 
 Supported Fields
-================
+****************
 
 This NApp support a subset of the OpenFlow specification fields in the bodies of
 the requests when creating and removing flows:
