@@ -16,6 +16,41 @@ This application creates an abstraction layer to other applications:
 it is only necessary to know the endpoints. The application handles
 the requests and return the information already formatted.
 
+Supported Fields
+================
+
+This NApp support a subset of the OpenFlow specification fields in the bodies of
+the requests when creating and removing flows:
+
+- Flow attributes:
+
+  - priority: Priority of the flow entry when matching packets;
+  - idle_timeout: Time before the flow expires when no packet is matched;
+  - hard_timeout: Time before the flow expires, not related to matching;
+  - cookie: Flow cookie;
+  - match:
+
+    - in_port: Port where the packet came from;
+    - dl_src: Ethernet frame source MAC address;
+    - dl_dst: Ethernet frame destination MAC address;
+    - dl_type: EtherType of the upper layer protocol;
+    - dl_vlan: 802.1q VLAN ID;
+    - dl_vlan_pcp: 802.1q VLAN PCP;
+    - nw_src: IPv4 source address of the packet;
+    - nw_dst: IPv4 destination address of the packet;
+    - nw_proto: Upper layer protocol number;
+
+  - actions:
+
+    - set_vlan: Change the VLAN ID of the packet;
+    - output: Send the packet through a port (physical port or controller).
+
+.. note::
+
+    For OpenFlow 1.3, the only Instruction supported is InstructionApplyAction.
+
+Other fields are not supported and will generate error messages from the NApp.
+
 ##########
 Installing
 ##########
@@ -27,9 +62,51 @@ To install this NApp, run:
 
    $ kytos napps install kytos/flow_manager
 
+########
 Rest API
-========
+########
 
 You can find a list of the available endpoints and example input/output in the
 'REST API' tab in this NApp's webpage in the `Kytos NApps Server
 <https://napps.kytos.io/kytos/flow_manager>`_.
+
+######
+Events
+######
+
+Generated
+*********
+
+kytos/flow_manager.add_flow
+===========================
+
+*buffer*: ``app``
+
+Event reporting that a FlowMod was sent to a Datapath with the ADD command.
+
+Content
+-------
+
+.. code-block:: python3
+
+   {
+     'datapath': <Switch object>,
+     'flow': <Object representing the installed flow>
+   }
+
+kytos/flow_manager.remove_flow
+==============================
+
+*buffer*: ``app``
+
+Event reporting that a FlowMod was sent to a Datapath with the DELETE command.
+
+Content
+-------
+
+.. code-block:: python3
+
+   {
+     'datapath': <Switch object>,
+     'flow': <Object representing the removed flow>
+   }
