@@ -60,7 +60,7 @@ class Main(KytosNApp):
         If no dpid is specified, install flows in all switches.
         """
         self._send_events(FlowSerializer.OFPFC_ADD, dpid)
-        return json.dumps({"response": "FlowMod Messages Sent"}), 201
+        return json.dumps({"response": "FlowMod Messages Sent"}), 202
 
     @rest('delete', methods=['POST'])
     @rest('delete/<dpid>', methods=['POST'])
