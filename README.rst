@@ -8,7 +8,7 @@ Overview
     CHANGE A LOT ON THE NEXT FEW DAYS/WEEKS, USE IT AT YOUR OWN DISCERNEMENT
 
 
-The *kytos/of_flow_manager* NApp exports a REST API to add, remove,
+The *kytos/flow_manager* NApp exports a REST API to add, remove,
 list flows from OpenFlow switches, for versions 1.0 and 1.3.
 It can be used by other applications to manage flows with the supported fields.
 
@@ -25,11 +25,11 @@ To install this NApp, run:
 
 .. code:: shell
 
-   $ kytos napps install kytos/of_flow_manager
+   $ kytos napps install kytos/flow_manager
 
 Rest API
 ========
 
 You can find a list of the available endpoints and example input/output in the
 'REST API' tab in this NApp's webpage in the `Kytos NApps Server
-<https://napps.kytos.io/kytos/of_flow_manager>`_.
+<https://napps.kytos.io/kytos/flow_manager>`_.

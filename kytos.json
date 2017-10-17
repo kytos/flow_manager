@@ -1,7 +1,7 @@
 {
   "author": "kytos",
   "username": "kytos",
-  "name": "of_flow_manager",
+  "name": "flow_manager",
   "description": "Manage switches' flows through a REST API.",
   "version": "0.2.0",
   "napp_dependencies": ["kytos/of_core"],

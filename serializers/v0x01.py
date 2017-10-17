@@ -2,7 +2,7 @@
 from pyof.v0x01.common.action import ActionOutput, ActionType, ActionVlanVid
 from pyof.v0x01.controller2switch.flow_mod import FlowMod
 
-from napps.kytos.of_flow_manager.serializers.base import FlowSerializer
+from napps.kytos.flow_manager.serializers.base import FlowSerializer
 
 
 class FlowSerializer10(FlowSerializer):
