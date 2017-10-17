@@ -42,8 +42,10 @@ paths:
       consumes:
         - application/json
       responses:
-        '201':
+        '202':
            description: FlowMod messages sent.
+        '400':
+           description: Invalid JSON flow.
   '/api/kytos/flow_manager/flows/{dpid}':
     get:
       tags:
@@ -62,6 +64,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/definitions/ResponseExample'
+        '404':
+          description: Datapath not found.
     post:
       tags:
         - Add
@@ -83,17 +87,21 @@ paths:
       consumes:
         - application/json
       responses:
-        '201':
+        '202':
           description: FlowMod messages sent.
+        '400':
+           description: Invalid JSON flow.
+        '404':
+          description: Datapath not found.
   /api/kytos/flow_manager/delete:
     post:
       tags:
         - Delete
-      summary: Remove flows from all known datapaths.
+      summary: Remove matching flows from all known datapaths.
       parameters:
         - in: body
           name: body
-          description: List of flows to be removed.
+          description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
           required: true
           schema:
             type: array
@@ -104,15 +112,17 @@ paths:
       responses:
         '202':
           description: FlowMod messages sent.
+        '400':
+           description: Invalid JSON flow.
   '/api/kytos/flow_manager/delete/{dpid}':
     post:
       tags:
         - Delete
-      summary: Remove flows from a single datapath.
+      summary: Remove matching flows from a single datapath.
       parameters:
         - in: body
           name: body
-          description: List of flows to be removed.
+          description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
           required: true
           schema:
             type: array
@@ -128,6 +138,10 @@ paths:
       responses:
         '202':
           description: FlowMod messages sent.
+        '400':
+           description: Invalid JSON flow.
+        '404':
+          description: Datapath not found.
 definitions:
   MatchExample:
     type: object
@@ -232,3 +246,13 @@ definitions:
         type: integer
         format: int64
         example: 84114904
+      priority:
+        type: integer
+        format: int64
+        example: 10
+      match:
+        type: object
+        properties:
+          dl_src:
+            type: string
+            example: '00:0a:0b:c2:12:16'
