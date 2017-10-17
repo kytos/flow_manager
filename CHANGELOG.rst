@@ -10,6 +10,7 @@ Added
 
 Changed
 =======
+- NApp renamed to 'kytos/flow_manager'
 
 Deprecated
 ==========

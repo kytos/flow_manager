@@ -1,6 +1,6 @@
 openapi: '3.0.0'
 info:
-  title: kytos/of_flow_manager
+  title: kytos/flow_manager
   version: 0.2.1
   description: >-
     **Warning**: *This documentation is experimental and may change soon.*
@@ -14,7 +14,7 @@ tags:
   - name: Add
   - name: Delete
 paths:
-  /api/kytos/of_flow_manager/flows:
+  /api/kytos/flow_manager/flows:
     get:
       tags:
         - List
@@ -44,7 +44,7 @@ paths:
       responses:
         '201':
            description: FlowMod messages sent.
-  '/api/kytos/of_flow_manager/flows/{dpid}':
+  '/api/kytos/flow_manager/flows/{dpid}':
     get:
       tags:
         - List
@@ -85,7 +85,7 @@ paths:
       responses:
         '201':
           description: FlowMod messages sent.
-  /api/kytos/of_flow_manager/delete:
+  /api/kytos/flow_manager/delete:
     post:
       tags:
         - Delete
@@ -104,7 +104,7 @@ paths:
       responses:
         '202':
           description: FlowMod messages sent.
-  '/api/kytos/of_flow_manager/delete/{dpid}':
+  '/api/kytos/flow_manager/delete/{dpid}':
     post:
       tags:
         - Delete

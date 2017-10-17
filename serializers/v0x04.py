@@ -8,7 +8,7 @@ from pyof.v0x04.common.flow_instructions import InstructionApplyAction
 from pyof.v0x04.common.flow_match import OxmOfbMatchField, OxmTLV, VlanId
 from pyof.v0x04.controller2switch.flow_mod import FlowMod
 
-from napps.kytos.of_flow_manager.serializers.base import FlowSerializer
+from napps.kytos.flow_manager.serializers.base import FlowSerializer
 
 
 class FlowSerializer13(FlowSerializer):

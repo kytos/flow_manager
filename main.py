@@ -4,9 +4,9 @@ import json
 from flask import request
 from kytos.core import KytosEvent, KytosNApp, log, rest
 
-from napps.kytos.of_flow_manager.serializers.base import FlowSerializer
-from napps.kytos.of_flow_manager.serializers.v0x01 import FlowSerializer10
-from napps.kytos.of_flow_manager.serializers.v0x04 import FlowSerializer13
+from napps.kytos.flow_manager.serializers.base import FlowSerializer
+from napps.kytos.flow_manager.serializers.v0x01 import FlowSerializer10
+from napps.kytos.flow_manager.serializers.v0x04 import FlowSerializer13
 
 
 class Main(KytosNApp):
@@ -74,7 +74,7 @@ class Main(KytosNApp):
 
     def _send_events(self, command, dpid=None):
         """Create FlowMods from HTTP request and send to switches."""
-        event_name = 'kytos/of_flow_manager.messages.out.ofpt_flow_mod'
+        event_name = 'kytos/flow_manager.messages.out.ofpt_flow_mod'
         if dpid:
             switches = [self.controller.get_switch_by_dpid(dpid)]
         else:
