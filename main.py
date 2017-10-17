@@ -78,7 +78,7 @@ class Main(KytosNApp):
         if dpid:
             switches = [self.controller.get_switch_by_dpid(dpid)]
         else:
-            switches = self.controller.switches
+            switches = [switch for switch in self.controller.switches.values()]
 
         for switch in switches:
             connection = switch.connection
