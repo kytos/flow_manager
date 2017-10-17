@@ -1,7 +1,7 @@
 """Flow serializer for OF 1.3."""
 from itertools import chain
 
-from pyof.foundation.network_types import HWAddress
+from pyof.foundation.basic_types import HWAddress, IPAddress
 from pyof.v0x04.common.action import ActionOutput, ActionSetField, ActionType
 from pyof.v0x04.common.flow_instructions import InstructionType as IType
 from pyof.v0x04.common.flow_instructions import InstructionApplyAction
@@ -23,7 +23,10 @@ class FlowSerializer13(FlowSerializer):
             'dl_dst': OxmOfbMatchField.OFPXMT_OFB_ETH_DST,
             'dl_type': OxmOfbMatchField.OFPXMT_OFB_ETH_TYPE,
             'dl_vlan': OxmOfbMatchField.OFPXMT_OFB_VLAN_VID,
-            'dl_vlan_pcp': OxmOfbMatchField.OFPXMT_OFB_VLAN_PCP}
+            'dl_vlan_pcp': OxmOfbMatchField.OFPXMT_OFB_VLAN_PCP,
+            'nw_src': OxmOfbMatchField.OFPXMT_OFB_IPV4_SRC,
+            'nw_dst': OxmOfbMatchField.OFPXMT_OFB_IPV4_DST,
+            'nw_proto': OxmOfbMatchField.OFPXMT_OFB_IP_PROTO}
         # Invert match_values index
         self._match_values = {b: a for a, b in self._match_names.items()}
 
@@ -52,13 +55,15 @@ class FlowSerializer13(FlowSerializer):
             tlv = OxmTLV()
             tlv.oxm_field = self._match_names[field_name]
             # set oxm_value
-            if field_name == 'dl_vlan_pcp':
+            if field_name in ('dl_vlan_pcp', 'nw_proto'):
                 tlv.oxm_value = data.to_bytes(1, 'big')
             elif field_name == 'dl_vlan':
                 vid = data | VlanId.OFPVID_PRESENT
                 tlv.oxm_value = vid.to_bytes(2, 'big')
             elif field_name in ('dl_src', 'dl_dst'):
                 tlv.oxm_value = HWAddress(data).pack()
+            elif field_name in ('nw_src', 'nw_dst'):
+                tlv.oxm_value = IPAddress(data).pack()
             elif field_name == 'in_port':
                 tlv.oxm_value = data.to_bytes(4, 'big')
             else:
@@ -107,6 +112,10 @@ class FlowSerializer13(FlowSerializer):
                 data = int.from_bytes(field.oxm_value, 'big') & 4095
             elif match_field in ('dl_src', 'dl_dst'):
                 addr = HWAddress()
+                addr.unpack(field.oxm_value)
+                data = str(addr)
+            elif match_field in ('nw_src', 'nw_dst'):
+                addr = IPAddress()
                 addr.unpack(field.oxm_value)
                 data = str(addr)
             else:

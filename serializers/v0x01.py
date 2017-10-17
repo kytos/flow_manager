@@ -17,7 +17,10 @@ class FlowSerializer10(FlowSerializer):
             'dl_dst'
             'dl_type'
             'dl_vlan'
-            'dl_vlan_pcp')
+            'dl_vlan_pcp'
+            'nw_src'
+            'nw_dst'
+            'nw_proto')
 
     def from_dict(self, dictionary):
         """Return an OF 1.0 FlowMod message from serialized dictionary."""

@@ -62,14 +62,6 @@ To install this NApp, run:
 
    $ kytos napps install kytos/flow_manager
 
-########
-Rest API
-########
-
-You can find a list of the available endpoints and example input/output in the
-'REST API' tab in this NApp's webpage in the `Kytos NApps Server
-<https://napps.kytos.io/kytos/flow_manager>`_.
-
 ######
 Events
 ######
@@ -77,8 +69,8 @@ Events
 Generated
 *********
 
-kytos/flow_manager.add_flow
-===========================
+kytos/flow_manager.flow.added
+=============================
 
 *buffer*: ``app``
 
@@ -94,8 +86,8 @@ Content
      'flow': <Object representing the installed flow>
    }
 
-kytos/flow_manager.remove_flow
-==============================
+kytos/flow_manager.flow.removed
+===============================
 
 *buffer*: ``app``
 
@@ -110,3 +102,11 @@ Content
      'datapath': <Switch object>,
      'flow': <Object representing the removed flow>
    }
+
+########
+Rest API
+########
+
+You can find a list of the available endpoints and example input/output in the
+'REST API' tab in this NApp's webpage in the `Kytos NApps Server
+<https://napps.kytos.io/kytos/flow_manager>`_.
