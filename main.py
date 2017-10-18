@@ -86,6 +86,7 @@ class Main(KytosNApp):
             for flow_dict in request.get_json():
                 event = KytosEvent(event_name, {'destination': connection})
                 self._send_event(flow_dict, serializer, command, event)
+                self._send_app_event(switch, flow_dict, command)
 
     def _send_event(self, flow_dict, serializer, command, event):
         """Create and send one FlowMod to one switch."""
@@ -95,6 +96,17 @@ class Main(KytosNApp):
         # Complete and send KytosEvent
         event.content['message'] = flow_mod
         self.controller.buffers.msg_out.put(event)
+
+    def _send_app_event(self, switch, flow_dict, command):
+        """Send an Event to other apps informing about a FlowMod."""
+        if command == FlowSerializer.OFPFC_ADD:
+            name = 'kytos/flow_manager.flow.added'
+        else:
+            name = 'kytos/flow_manager.flow.removed'
+        content = {'datapath': switch,
+                   'flow': flow_dict}
+        event_app = KytosEvent(name, content)
+        self.controller.buffers.app.put(event_app)
 
     def _get_serializer(self, switch):
         """Return the serializer with for the switch OF protocol version."""
