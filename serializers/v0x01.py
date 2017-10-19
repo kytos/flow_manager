@@ -11,16 +11,16 @@ class FlowSerializer10(FlowSerializer):
     def __init__(self):
         """Initialize OF 1.0 specific variables."""
         super().__init__()
-        self.match_attributes = set(
-            'in_port'
-            'dl_src'
-            'dl_dst'
-            'dl_type'
-            'dl_vlan'
-            'dl_vlan_pcp'
-            'nw_src'
-            'nw_dst'
-            'nw_proto')
+        self.match_attributes = set((
+            'in_port',
+            'dl_src',
+            'dl_dst',
+            'dl_type',
+            'dl_vlan',
+            'dl_vlan_pcp',
+            'nw_src',
+            'nw_dst',
+            'nw_proto'))
 
     def from_dict(self, dictionary):
         """Return an OF 1.0 FlowMod message from serialized dictionary."""
@@ -31,7 +31,7 @@ class FlowSerializer10(FlowSerializer):
             elif field == 'match':
                 self._update_match(flow_mod.match, data)
             elif field == 'actions':
-                actions = self._actions_from_dict(data)
+                actions = self._actions_from_list(data)
                 flow_mod.actions.extend(actions)
         return flow_mod
 
@@ -42,17 +42,17 @@ class FlowSerializer10(FlowSerializer):
                 setattr(match, field, data)
 
     @staticmethod
-    def _actions_from_dict(dictionary):
-        """Return actions found in dictionary."""
+    def _actions_from_list(action_list):
+        """Return actions found in the action list."""
         actions = []
-        for action_type, data in dictionary.items():
-            if action_type == 'set_vlan':
-                action = ActionVlanVid(vlan_id=data)
-            elif action_type == 'output':
-                action = ActionOutput(port=data)
+        for action in action_list:
+            if action['type'] == 'set_vlan':
+                new_action = ActionVlanVid(vlan_id=action['value'])
+            elif action['type'] == 'output':
+                new_action = ActionOutput(port=action['value'])
             else:
                 continue
-            actions.append(action)
+            actions.append(new_action)
         return actions
 
     def to_dict(self, flow_stats):
@@ -66,12 +66,14 @@ class FlowSerializer10(FlowSerializer):
             if field in self.match_attributes:
                 match_dict[field] = data.value
 
-        actions_dict = {}
+        actions_list = []
         for action in flow_stats.actions:
             if action.action_type == ActionType.OFPAT_SET_VLAN_VID:
-                actions_dict['set_vlan'] = action.vlan_id.value
+                actions_list.append({'type': 'set_vlan', 'value':
+                                     action.vlan_id.value})
             elif action.action_type == ActionType.OFPAT_OUTPUT:
-                actions_dict['output'] = action.port.value
+                actions_list.append({'type': 'output', 'value':
+                                     action.port.value})
 
-        flow_dict.update({'match': match_dict, 'actions': actions_dict})
+        flow_dict.update({'match': match_dict, 'actions': actions_list})
         return flow_dict

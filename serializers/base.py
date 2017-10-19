@@ -18,8 +18,8 @@ class FlowSerializer(ABC):
 
     def __init__(self):
         """Initialize common attributes of 1.0 and 1.3 versions."""
-        self.flow_attributes = set(('table_id', 'priority', 'idle_timeout',
-                                   'hard_timeout', 'cookie'))
+        self.flow_attributes = set(('priority', 'idle_timeout', 'hard_timeout',
+                                    'cookie'))
 
     @abstractmethod
     def from_dict(self, dictionary):
