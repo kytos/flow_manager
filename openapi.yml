@@ -25,7 +25,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/Flows'
     post:
       tags:
         - Add
@@ -38,7 +38,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/SetFlow'
+              $ref: '#/components/schemas/Flow'
       consumes:
         - application/json
       responses:
@@ -63,7 +63,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/Flows'
         '404':
           description: Datapath not found.
     post:
@@ -78,7 +78,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/SetFlow'
+              $ref: '#/components/schemas/Flow'
         - name: dpid
           in: path
           required: true
@@ -106,7 +106,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/DeleteFlow'
+              $ref: '#/components/schemas/Flow'
       consumes:
         - application/json
       responses:
@@ -127,7 +127,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/DeleteFlow'
+              $ref: '#/components/schemas/Flow'
         - name: dpid
           in: path
           required: true
@@ -150,7 +150,7 @@ components:
       properties:
         in_port:
           type: integer
-          format: int64
+          format: int16
           example: 2
         dl_src:
           type: string
@@ -160,45 +160,51 @@ components:
           example: '00:15:af:d5:38:98'
         dl_type:
           type: integer
-          format: int64
+          format: int16
           example: 2048
         dl_vlan:
           type: integer
-          format: int64
+          format: int16
           example: 300
         dl_vlan_pcp:
           type: integer
-          format: int64
+          format: int8
           example: 0
+        nw_src:
+          type: string
+          example: '192.168.0.1'
+        nw_dst:
+          type: string
+          example: '192.168.0.2'
+        nw_proto:
+          type: integer
+          format: int8
+          example: 2048
     Actions:
       type: object
       properties:
         set_vlan:
           type: integer
-          format: int64
+          format: int16
           example: 450
         output:
           type: integer
-          format: int64
+          format: int16
           example: 3
     Flow:
       type: object
       properties:
-        table_id:
-          type: integer
-          format: int64
-          example: 0
         priority:
           type: integer
-          format: int64
+          format: int16
           example: 10
         idle_timeout:
           type: integer
-          format: int64
+          format: int16
           example: 360
         hard_timeout:
           type: integer
-          format: int64
+          format: int16
           example: 1200
         cookie:
           type: integer
@@ -208,53 +214,10 @@ components:
           $ref: '#/components/schemas/Match'
         actions:
           $ref: '#/components/schemas/Actions'
-    Response:
+    Flows:
       type: object
       properties:
         '00:00:00:00:00:00:00:01':
           type: array
           items:
             $ref: '#/components/schemas/Flow'
-    SetMatch:
-      type: object
-      properties:
-        in_port:
-          type: integer
-          format: int64
-          example: 5
-        dl_vlan:
-          type: integer
-          format: int64
-          example: 110
-    SetFlow:
-      type: object
-      properties:
-        priority:
-          type: integer
-          format: int64
-          example: 10
-        cookie:
-          type: integer
-          format: int64
-          example: 40941148
-        match:
-          $ref: '#/components/schemas/SetMatch'
-        actions:
-          $ref: '#/components/schemas/Actions'
-    DeleteFlow:
-      type: object
-      properties:
-        cookie:
-          type: integer
-          format: int64
-          example: 84114904
-        priority:
-          type: integer
-          format: int64
-          example: 10
-        match:
-          type: object
-          properties:
-            dl_src:
-              type: string
-              example: '00:0a:0b:c2:12:16'
