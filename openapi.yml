@@ -220,6 +220,9 @@ components:
       type: object
       properties:
         '00:00:00:00:00:00:00:01':
-          type: array
-          items:
-            $ref: '#/components/schemas/Flow'
+          type: object
+          properties:
+            flows:
+              type: array
+              items:
+                $ref: '#/components/schemas/Flow'

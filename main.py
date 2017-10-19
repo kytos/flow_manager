@@ -49,7 +49,8 @@ class Main(KytosNApp):
         for switch in switches:
             serializer = self._get_serializer(switch)
             flows_dict = [serializer.to_dict(flow) for flow in switch.flows]
-            switch_flows[switch.dpid] = flows_dict
+            switch_flows[switch.dpid] = {'flows': flows_dict}
+
         return json.dumps(switch_flows)
 
     @rest('flows', methods=['POST'])
