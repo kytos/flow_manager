@@ -43,7 +43,7 @@ class FlowSerializer13(FlowSerializer):
                 tlvs = self._match_from_dict(data)
                 flow_mod.match.oxm_match_fields.append(list(tlvs))
             elif field == 'actions':
-                actions = self._actions_from_dict(data)
+                actions = self._actions_from_list(data)
                 instruction.actions.extend(list(actions))
 
         return flow_mod
@@ -71,11 +71,11 @@ class FlowSerializer13(FlowSerializer):
             yield tlv
 
     @classmethod
-    def _actions_from_dict(cls, dictionary):
-        for action_type, data in dictionary.items():
-            action = cls._action_from_dict(action_type, data)
-            if action:
-                yield action
+    def _actions_from_list(cls, action_list):
+        for action in action_list:
+            new_action = cls._action_from_dict(action['type'], action['value'])
+            if new_action:
+                yield new_action
 
     @classmethod
     def _action_from_dict(cls, action_type, data):
@@ -99,7 +99,7 @@ class FlowSerializer13(FlowSerializer):
                      for field, data in vars(flow_stats).items()
                      if field in self.flow_attributes}
         flow_dict['match'] = self._match_to_dict(flow_stats)
-        flow_dict['actions'] = self._actions_to_dict(flow_stats)
+        flow_dict['actions'] = self._actions_to_list(flow_stats)
         return flow_dict
 
     def _match_to_dict(self, flow_stats):
@@ -123,21 +123,21 @@ class FlowSerializer13(FlowSerializer):
             match_dict[match_field] = data
         return match_dict
 
-    def _actions_to_dict(self, flow_stats):
-        actions_dict = {}
+    def _actions_to_list(self, flow_stats):
+        actions_list = []
         for action in self._filter_actions(flow_stats):
             action_dict = self._action_to_dict(action)
-            actions_dict.update(action_dict)
-        return actions_dict
+            actions_list.append(action_dict)
+        return actions_list
 
     @staticmethod
     def _action_to_dict(action):
         if action.action_type == ActionType.OFPAT_SET_FIELD:
             if action.field.oxm_field == OxmOfbMatchField.OFPXMT_OFB_VLAN_VID:
                 data = int.from_bytes(action.field.oxm_value, 'big') & 4095
-            return {'set_vlan': data}
+                return {'type': 'set_vlan', 'value': data}
         elif action.action_type == ActionType.OFPAT_OUTPUT:
-            return {'output': action.port.value}
+            return {'type': 'output', 'value': action.port.value}
         return {}
 
     @staticmethod

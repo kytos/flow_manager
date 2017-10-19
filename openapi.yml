@@ -181,16 +181,18 @@ components:
           format: int8
           example: 2048
     Actions:
-      type: object
-      properties:
-        set_vlan:
-          type: integer
-          format: int16
-          example: 450
-        output:
-          type: integer
-          format: int16
-          example: 3
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [set_vlan, output]
+            example: 'output'
+          value:
+            type: int
+            format: int16
+            example: 7
     Flow:
       type: object
       properties:
