@@ -25,7 +25,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseExample'
+                $ref: '#/components/schemas/Response'
     post:
       tags:
         - Add
@@ -38,7 +38,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/SetFlowExample'
+              $ref: '#/components/schemas/SetFlow'
       consumes:
         - application/json
       responses:
@@ -63,7 +63,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseExample'
+                $ref: '#/components/schemas/Response'
         '404':
           description: Datapath not found.
     post:
@@ -78,7 +78,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/SetFlowExample'
+              $ref: '#/components/schemas/SetFlow'
         - name: dpid
           in: path
           required: true
@@ -106,7 +106,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/DeleteFlowExample'
+              $ref: '#/components/schemas/DeleteFlow'
       consumes:
         - application/json
       responses:
@@ -127,7 +127,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/DeleteFlowExample'
+              $ref: '#/components/schemas/DeleteFlow'
         - name: dpid
           in: path
           required: true
@@ -145,7 +145,7 @@ paths:
 
 components:
   schemas:
-    MatchExample:
+    Match:
       type: object
       properties:
         in_port:
@@ -170,7 +170,7 @@ components:
           type: integer
           format: int64
           example: 0
-    ActionsExample:
+    Actions:
       type: object
       properties:
         set_vlan:
@@ -181,7 +181,7 @@ components:
           type: integer
           format: int64
           example: 3
-    FlowExample:
+    Flow:
       type: object
       properties:
         table_id:
@@ -205,17 +205,17 @@ components:
           format: int64
           example: 84114904
         match:
-          $ref: '#/components/schemas/MatchExample'
+          $ref: '#/components/schemas/Match'
         actions:
-          $ref: '#/components/schemas/ActionsExample'
-    ResponseExample:
+          $ref: '#/components/schemas/Actions'
+    Response:
       type: object
       properties:
         '00:00:00:00:00:00:00:01':
           type: array
           items:
-            $ref: '#/components/schemas/FlowExample'
-    SetMatchExample:
+            $ref: '#/components/schemas/Flow'
+    SetMatch:
       type: object
       properties:
         in_port:
@@ -226,7 +226,7 @@ components:
           type: integer
           format: int64
           example: 110
-    SetFlowExample:
+    SetFlow:
       type: object
       properties:
         priority:
@@ -238,10 +238,10 @@ components:
           format: int64
           example: 40941148
         match:
-          $ref: '#/components/schemas/SetMatchExample'
+          $ref: '#/components/schemas/SetMatch'
         actions:
-          $ref: '#/components/schemas/ActionsExample'
-    DeleteFlowExample:
+          $ref: '#/components/schemas/Actions'
+    DeleteFlow:
       type: object
       properties:
         cookie:
