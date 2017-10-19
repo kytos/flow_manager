@@ -14,7 +14,7 @@ tags:
   - name: Add
   - name: Delete
 paths:
-  /api/kytos/flow_manager/flows:
+  /api/kytos/flow_manager/v1/flows:
     get:
       tags:
         - List
@@ -46,7 +46,7 @@ paths:
            description: FlowMod messages sent.
         '400':
            description: Invalid JSON flow.
-  '/api/kytos/flow_manager/flows/{dpid}':
+  '/api/kytos/flow_manager/v1/flows/{dpid}':
     get:
       tags:
         - List
@@ -93,7 +93,7 @@ paths:
            description: Invalid JSON flow.
         '404':
           description: Datapath not found.
-  /api/kytos/flow_manager/delete:
+  /api/kytos/flow_manager/v1/delete:
     post:
       tags:
         - Delete
@@ -114,7 +114,7 @@ paths:
           description: FlowMod messages sent.
         '400':
            description: Invalid JSON flow.
-  '/api/kytos/flow_manager/delete/{dpid}':
+  '/api/kytos/flow_manager/v1/delete/{dpid}':
     post:
       tags:
         - Delete

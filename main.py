@@ -34,8 +34,8 @@ class Main(KytosNApp):
         """Shutdown routine of the NApp."""
         log.debug("flow-manager stopping")
 
-    @rest('flows')
-    @rest('flows/<dpid>')
+    @rest('v1/flows')
+    @rest('v1/flows/<dpid>')
     def list(self, dpid=None):
         """Retrieve all flows from a switch identified by dpid.
 
@@ -53,8 +53,8 @@ class Main(KytosNApp):
 
         return json.dumps(switch_flows)
 
-    @rest('flows', methods=['POST'])
-    @rest('flows/<dpid>', methods=['POST'])
+    @rest('v1/flows', methods=['POST'])
+    @rest('v1/flows/<dpid>', methods=['POST'])
     def add(self, dpid=None):
         """Install new flows in the switch identified by dpid.
 
@@ -63,8 +63,8 @@ class Main(KytosNApp):
         self._send_events(FlowSerializer.OFPFC_ADD, dpid)
         return json.dumps({"response": "FlowMod Messages Sent"}), 202
 
-    @rest('delete', methods=['POST'])
-    @rest('delete/<dpid>', methods=['POST'])
+    @rest('v1/delete', methods=['POST'])
+    @rest('v1/delete/<dpid>', methods=['POST'])
     def delete(self, dpid=None):
         """Delete existing flows in the switch identified by dpid.
 
