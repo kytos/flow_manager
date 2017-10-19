@@ -25,7 +25,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/Flows'
     post:
       tags:
         - Add
@@ -63,7 +63,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/Flows'
         '404':
           description: Datapath not found.
     post:
@@ -208,7 +208,7 @@ components:
           $ref: '#/components/schemas/Match'
         actions:
           $ref: '#/components/schemas/Actions'
-    Response:
+    Flows:
       type: object
       properties:
         '00:00:00:00:00:00:00:01':
