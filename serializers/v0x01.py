@@ -1,5 +1,6 @@
 """Flow serializer for OF 1.0."""
 from pyof.v0x01.common.action import ActionOutput, ActionType, ActionVlanVid
+from pyof.v0x01.common.phy_port import Port
 from pyof.v0x01.controller2switch.flow_mod import FlowMod
 
 from napps.kytos.flow_manager.serializers.base import FlowSerializer
@@ -49,7 +50,10 @@ class FlowSerializer10(FlowSerializer):
             if action['type'] == 'set_vlan':
                 new_action = ActionVlanVid(vlan_id=action['value'])
             elif action['type'] == 'output':
-                new_action = ActionOutput(port=action['value'])
+                if action['value'] == 'controller':
+                    new_action = ActionOutput(port=Port.OFPP_CONTROLLER)
+                else:
+                    new_action = ActionOutput(port=action['value'])
             else:
                 continue
             actions.append(new_action)
@@ -72,7 +76,11 @@ class FlowSerializer10(FlowSerializer):
                 actions_list.append({'type': 'set_vlan', 'value':
                                      action.vlan_id.value})
             elif action.action_type == ActionType.OFPAT_OUTPUT:
-                actions_list.append({'type': 'output', 'value':
+                if action.port == Port.OFPP_CONTROLLER:
+                    actions_list.append({'type': 'output', 'value':
+                                         'controller'})
+                else:
+                    actions_list.append({'type': 'output', 'value':
                                      action.port.value})
 
         flow_dict.update({'match': match_dict, 'actions': actions_list})

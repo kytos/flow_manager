@@ -6,6 +6,7 @@ from pyof.v0x04.common.action import ActionOutput, ActionSetField, ActionType
 from pyof.v0x04.common.flow_instructions import InstructionType as IType
 from pyof.v0x04.common.flow_instructions import InstructionApplyAction
 from pyof.v0x04.common.flow_match import OxmOfbMatchField, OxmTLV, VlanId
+from pyof.v0x04.common.port import PortNo
 from pyof.v0x04.controller2switch.flow_mod import FlowMod
 
 from napps.kytos.flow_manager.serializers.base import FlowSerializer
@@ -83,6 +84,8 @@ class FlowSerializer13(FlowSerializer):
             tlv = cls._create_vlan_tlv(vlan_id=data)
             return ActionSetField(field=tlv)
         elif action_type == 'output':
+            if data == 'controller':
+                return ActionOutput(port=PortNo.OFPP_CONTROLLER)
             return ActionOutput(port=data)
 
     @staticmethod
@@ -137,6 +140,8 @@ class FlowSerializer13(FlowSerializer):
                 data = int.from_bytes(action.field.oxm_value, 'big') & 4095
                 return {'type': 'set_vlan', 'value': data}
         elif action.action_type == ActionType.OFPAT_OUTPUT:
+            if action.port == PortNo.OFPP_CONTROLLER:
+                return {'type': 'output', 'value': 'controller'}
             return {'type': 'output', 'value': action.port.value}
         return {}
 
