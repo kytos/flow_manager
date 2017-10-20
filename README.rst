@@ -43,7 +43,13 @@ the requests when creating and removing flows:
   - actions:
 
     - set_vlan: Change the VLAN ID of the packet;
-    - output: Send the packet through a port (physical port or controller).
+    - output: Send the packet through a port.
+
+.. note::
+
+    For the Output Action port you may use any port number or the string
+    "controller". The string will be interpreted and converted to the correct
+    controller port number for the datapath protocol version.
 
 .. note::
 
