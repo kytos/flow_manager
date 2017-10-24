@@ -185,7 +185,7 @@ components:
       items:
         type: object
         properties:
-          type:
+          action_type:
             type: string
             enum: [set_vlan, output]
             example: 'output'
