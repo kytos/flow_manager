@@ -4,10 +4,8 @@ import json
 from flask import request
 from kytos.core import KytosEvent, KytosNApp, log, rest
 
-from napps.kytos.flow_manager.serializers.base import FlowSerializer
-from napps.kytos.flow_manager.serializers.v0x01 import FlowSerializer10
-from napps.kytos.flow_manager.serializers.v0x04 import FlowSerializer13
-
+from napps.kytos.of_core.v0x01.flow import Flow as Flow10
+from napps.kytos.of_core.v0x04.flow import Flow as Flow13
 
 class Main(KytosNApp):
     """Main class to be used by Kytos controller."""
@@ -19,8 +17,6 @@ class Main(KytosNApp):
         Users shouldn't call this method directly.
         """
         log.debug("flow-manager starting")
-        self._serializer10 = FlowSerializer10()
-        self._serializer13 = FlowSerializer13()
 
     def execute(self):
         """Run once on NApp 'start' or in a loop.
@@ -47,8 +43,7 @@ class Main(KytosNApp):
         switch_flows = {}
 
         for switch in switches:
-            serializer = self._get_serializer(switch)
-            flows_dict = [serializer.to_dict(flow) for flow in switch.flows]
+            flows_dict = [flow.as_dict() for flow in switch.flows]
             switch_flows[switch.dpid] = {'flows': flows_dict}
 
         return json.dumps(switch_flows)
@@ -60,8 +55,7 @@ class Main(KytosNApp):
 
         If no dpid is specified, install flows in all switches.
         """
-        self._send_events(FlowSerializer.OFPFC_ADD, dpid)
-        return json.dumps({"response": "FlowMod Messages Sent"}), 202
+        return self._send_flow_mods_from_request(request, dpid, "add")
 
     @rest('v1/delete', methods=['POST'])
     @rest('v1/delete/<dpid>', methods=['POST'])
@@ -70,46 +64,52 @@ class Main(KytosNApp):
 
         If no dpid is specified, delete flows from all switches.
         """
-        self._send_events(FlowSerializer.OFPFC_DELETE, dpid)
-        return json.dumps({"response": "FlowMod Messages Sent"}), 202
+        return self._send_flow_mods_from_request(request, dpid, "delete")
 
-    def _send_events(self, command, dpid=None):
-        """Create FlowMods from HTTP request and send to switches."""
-        event_name = 'kytos/flow_manager.messages.out.ofpt_flow_mod'
+    def _send_flow_mods_from_request(self, request, dpid, command):
+        flows_dict = request.get_json()
+
         if dpid:
             switches = [self.controller.get_switch_by_dpid(dpid)]
         else:
-            switches = [switch for switch in self.controller.switches.values()]
+            switches = self.controller.switches.values()
 
         for switch in switches:
-            connection = switch.connection
-            serializer = self._get_serializer(switch)
-            for flow_dict in request.get_json():
-                event = KytosEvent(event_name, {'destination': connection})
-                self._send_event(flow_dict, serializer, command, event)
-                self._send_app_event(switch, flow_dict, command)
+            serializer = self._get_flow_serializer(switch)
+            for flow_dict in flows_dict:
+                flow = serializer.from_dict(flow_dict, switch)
+                if command == "delete":
+                    flow_mod = flow.as_delete_flow_mod()
+                elif command == "add":
+                    flow_mod = flow.as_add_flow_mod()
+                self._send_flow_mod(flow.switch, flow_mod)
 
-    def _send_event(self, flow_dict, serializer, command, event):
-        """Create and send one FlowMod to one switch."""
-        # Create FlowMod message
-        flow_mod = serializer.from_dict(flow_dict)
-        flow_mod.command = command
-        # Complete and send KytosEvent
-        event.content['message'] = flow_mod
+            self._send_napp_event(switch, flow, command)
+
+        return json.dumps({"response": "FlowMod Messages Sent"}), 202
+
+    def _send_flow_mod(self, switch, flow_mod):
+        event_name = 'kytos/flow_manager.messages.out.ofpt_flow_mod'
+
+        content = {'destination': switch.connection,
+                   'message': flow_mod}
+
+        event = KytosEvent(name=event_name, content=content)
         self.controller.buffers.msg_out.put(event)
 
-    def _send_app_event(self, switch, flow_dict, command):
+
+    def _send_napp_event(self, switch, flow, command):
         """Send an Event to other apps informing about a FlowMod."""
-        if command == FlowSerializer.OFPFC_ADD:
+        if command == 'add':
             name = 'kytos/flow_manager.flow.added'
-        else:
+        elif command == 'delete':
             name = 'kytos/flow_manager.flow.removed'
         content = {'datapath': switch,
-                   'flow': flow_dict}
+                   'flow': flow}
         event_app = KytosEvent(name, content)
         self.controller.buffers.app.put(event_app)
 
-    def _get_serializer(self, switch):
+    def _get_flow_serializer(self, switch):
         """Return the serializer with for the switch OF protocol version."""
         version = switch.connection.protocol.version
-        return self._serializer10 if version == 0x01 else self._serializer13
+        return Flow10 if version == 0x01 else Flow13
