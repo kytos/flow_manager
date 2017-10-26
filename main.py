@@ -7,6 +7,7 @@ from kytos.core import KytosEvent, KytosNApp, log, rest
 from napps.kytos.of_core.v0x01.flow import Flow as Flow10
 from napps.kytos.of_core.v0x04.flow import Flow as Flow13
 
+
 class Main(KytosNApp):
     """Main class to be used by Kytos controller."""
 
@@ -55,7 +56,7 @@ class Main(KytosNApp):
 
         If no dpid is specified, install flows in all switches.
         """
-        return self._send_flow_mods_from_request(request, dpid, "add")
+        return self._send_flow_mods_from_request(dpid, "add")
 
     @rest('v1/delete', methods=['POST'])
     @rest('v1/delete/<dpid>', methods=['POST'])
@@ -64,9 +65,9 @@ class Main(KytosNApp):
 
         If no dpid is specified, delete flows from all switches.
         """
-        return self._send_flow_mods_from_request(request, dpid, "delete")
+        return self._send_flow_mods_from_request(dpid, "delete")
 
-    def _send_flow_mods_from_request(self, request, dpid, command):
+    def _send_flow_mods_from_request(self, dpid, command):
         flows_dict = request.get_json()
 
         if dpid:
@@ -97,7 +98,6 @@ class Main(KytosNApp):
         event = KytosEvent(name=event_name, content=content)
         self.controller.buffers.msg_out.put(event)
 
-
     def _send_napp_event(self, switch, flow, command):
         """Send an Event to other apps informing about a FlowMod."""
         if command == 'add':
@@ -109,7 +109,8 @@ class Main(KytosNApp):
         event_app = KytosEvent(name, content)
         self.controller.buffers.app.put(event_app)
 
-    def _get_flow_serializer(self, switch):
+    @staticmethod
+    def _get_flow_serializer(switch):
         """Return the serializer with for the switch OF protocol version."""
         version = switch.connection.protocol.version
         return Flow10 if version == 0x01 else Flow13
