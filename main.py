@@ -38,8 +38,10 @@ class Main(KytosNApp):
 
         If no dpid is specified, return all flows from all switches.
         """
-        dpids = [dpid] if dpid else self.controller.switches
-        switches = [self.controller.get_switch_by_dpid(dpid) for dpid in dpids]
+        if dpid is None:
+            switches = self.controller.switches.values()
+        else:
+            switches = [self.controller.get_switch_by_dpid(dpid)]
 
         switch_flows = {}
 
@@ -70,10 +72,10 @@ class Main(KytosNApp):
     def _send_flow_mods_from_request(self, dpid, command):
         flows_dict = request.get_json()
 
-        if dpid:
-            switches = [self.controller.get_switch_by_dpid(dpid)]
-        else:
+        if dpid is None:
             switches = self.controller.switches.values()
+        else:
+            switches = [self.controller.get_switch_by_dpid(dpid)]
 
         for switch in switches:
             serializer = self._get_flow_serializer(switch)
