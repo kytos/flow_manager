@@ -8,31 +8,30 @@ fi
 
 API_URL="http://$KYTOS_HOST:8181/api/kytos/flow_manager/v1"
 
-echo 'Press any key to install 2 flows in 00:00:00:00:00:00:00:01...'
+echo -n 'Press any key to install 2 flows in 00:00:00:00:00:00:00:01...'
 read
 
-CMD="curl -H \"Content-Type: application/json\" -X POST -d @add_flow_mod.json $API_URL/flows/00:00:00:00:00:00:00:01"
+CMD="curl -sH \"Content-Type: application/json\" -X POST -d @add_flow_mod.json $API_URL/flows/00:00:00:00:00:00:00:01"
 echo $CMD
 eval "$CMD"
 echo
+echo
 
-cat <<VERIFY
---------------------------------------------------------------------------------
-Flows are updated every 5 seconds by default. Assert they were installed:
+function list_vlans {
+    echo -n 'Flows are updated every 5 seconds by default. Wait the interval and press any key.'
+    read
+    CMD="curl -s http://$KYTOS_HOST:8181/api/kytos/flow_manager/v1/flows/00:00:00:00:00:00:00:01 | python -m json.tool | grep dl_vlan\\\""
+    echo $CMD
+    user_input='y'
+    while [[ $user_input == 'n' || $user_input == 'N' ]]; do
+        eval "$CMD"
+        echo -n "$1 Repeat (n) or proceed (Y)? "
+        read user_input
+    done
+    echo
+}
 
-1. Kytos controller:
-kytos $> flows = controller.switches['00:00:00:00:00:00:00:01'].flows
-kytos $> [flow.match.dl_vlan for flow in flows]
-Out[ ]: [20, 21]
-
-2. REST:
-curl http://$KYTOS_HOST:8181/api/kytos/flow_manager/v1/flows/00:00:00:00:00:00:00:01 | python -m json.tool | grep dl_vlan
-                    "dl_vlan": 21,
-                    "dl_vlan_pcp": 0,
-                    "dl_vlan": 20,
-                    "dl_vlan_pcp": 0,
---------------------------------------------------------------------------------
-VERIFY
+list_vlans 'You should see VLANs 20 and 21.'
 
 echo 'Press any key to delete flows with VLAN = 20'
 read
@@ -40,5 +39,6 @@ CMD="curl -H \"Content-Type: application/json\" -X POST -d @delete_flow_mod.json
 echo $CMD
 eval "$CMD"
 echo
+echo
 
-echo 'Check the flows again and VLAN = 20 should not be found.'
+list_vlans 'You should see VLAN 21 and _not_ 20.'

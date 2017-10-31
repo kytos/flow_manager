@@ -82,9 +82,9 @@ class Main(KytosNApp):
             for flow_dict in flows_dict:
                 flow = serializer.from_dict(flow_dict, switch)
                 if command == "delete":
-                    flow_mod = flow.as_delete_flow_mod()
+                    flow_mod = flow.as_of_delete_flow_mod()
                 elif command == "add":
-                    flow_mod = flow.as_add_flow_mod()
+                    flow_mod = flow.as_of_add_flow_mod()
                 self._send_flow_mod(flow.switch, flow_mod)
 
             self._send_napp_event(switch, flow, command)
