@@ -1,7 +1,5 @@
 """kytos/flow_manager NApp installs, lists and deletes switch flows."""
-import json
-
-from flask import request
+from flask import jsonify, request
 from kytos.core import KytosEvent, KytosNApp, log, rest
 
 from napps.kytos.of_core.v0x01.flow import Flow as Flow10
@@ -49,7 +47,7 @@ class Main(KytosNApp):
             flows_dict = [flow.as_dict() for flow in switch.flows]
             switch_flows[switch.dpid] = {'flows': flows_dict}
 
-        return json.dumps(switch_flows)
+        return jsonify(switch_flows)
 
     @rest('v1/flows', methods=['POST'])
     @rest('v1/flows/<dpid>', methods=['POST'])
@@ -89,7 +87,7 @@ class Main(KytosNApp):
 
             self._send_napp_event(switch, flow, command)
 
-        return json.dumps({"response": "FlowMod Messages Sent"}), 202
+        return jsonify({"response": "FlowMod Messages Sent"})
 
     def _send_flow_mod(self, switch, flow_mod):
         event_name = 'kytos/flow_manager.messages.out.ofpt_flow_mod'
