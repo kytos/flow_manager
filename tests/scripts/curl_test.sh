@@ -22,7 +22,7 @@ function list_vlans {
     read
     CMD="curl -s http://$KYTOS_HOST:8181/api/kytos/flow_manager/v1/flows/00:00:00:00:00:00:00:01 | python -m json.tool | grep dl_vlan\\\""
     echo $CMD
-    user_input='y'
+    user_input='n'
     while [[ $user_input == 'n' || $user_input == 'N' ]]; do
         eval "$CMD"
         echo -n "$1 Repeat (n) or proceed (Y)? "
