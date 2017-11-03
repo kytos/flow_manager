@@ -1,7 +1,7 @@
 openapi: '3.0.0'
 info:
   title: kytos/flow_manager
-  version: v1
+  version: 1.1.0
   description: >-
     **Warning**: *This documentation is experimental and may change soon.*
 
