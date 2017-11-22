@@ -77,7 +77,8 @@ class Main(KytosNApp):
 
         for switch in switches:
             serializer = self._get_flow_serializer(switch)
-            for flow_dict in flows_dict:
+            flows = flows_dict.get('flows', [])
+            for flow_dict in flows:
                 flow = serializer.from_dict(flow_dict, switch)
                 if command == "delete":
                     flow_mod = flow.as_of_delete_flow_mod()
