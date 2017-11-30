@@ -29,8 +29,8 @@ class Main(KytosNApp):
         """Shutdown routine of the NApp."""
         log.debug("flow-manager stopping")
 
-    @rest('v1/flows')
-    @rest('v1/flows/<dpid>')
+    @rest('v2/flows')
+    @rest('v2/flows/<dpid>')
     def list(self, dpid=None):
         """Retrieve all flows from a switch identified by dpid.
 
@@ -49,8 +49,8 @@ class Main(KytosNApp):
 
         return jsonify(switch_flows)
 
-    @rest('v1/flows', methods=['POST'])
-    @rest('v1/flows/<dpid>', methods=['POST'])
+    @rest('v2/flows', methods=['POST'])
+    @rest('v2/flows/<dpid>', methods=['POST'])
     def add(self, dpid=None):
         """Install new flows in the switch identified by dpid.
 
@@ -58,8 +58,8 @@ class Main(KytosNApp):
         """
         return self._send_flow_mods_from_request(dpid, "add")
 
-    @rest('v1/delete', methods=['POST'])
-    @rest('v1/delete/<dpid>', methods=['POST'])
+    @rest('v2/delete', methods=['POST'])
+    @rest('v2/delete/<dpid>', methods=['POST'])
     def delete(self, dpid=None):
         """Delete existing flows in the switch identified by dpid.
 
