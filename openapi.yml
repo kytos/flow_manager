@@ -36,9 +36,12 @@ paths:
           description: List of flows to be inserted.
           required: true
           schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/Flow'
+            type: object
+            properties:
+              flow:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flow'
       consumes:
         - application/json
       responses:
@@ -76,9 +79,12 @@ paths:
           description: List of flows to be inserted.
           required: true
           schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/Flow'
+            type: object
+            properties:
+              flow:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flow'
         - name: dpid
           in: path
           required: true
@@ -104,9 +110,12 @@ paths:
           description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
           required: true
           schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/Flow'
+            type: object
+            properties:
+              flow:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flow'
       consumes:
         - application/json
       responses:
@@ -125,9 +134,12 @@ paths:
           description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
           required: true
           schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/Flow'
+            type: object
+            properties:
+              flow:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flow'
         - name: dpid
           in: path
           required: true
@@ -179,7 +191,7 @@ components:
         nw_proto:
           type: integer
           format: int8
-          example: 2048
+          example: 17
     Actions:
       type: array
       items:
