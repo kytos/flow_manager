@@ -1,7 +1,9 @@
-[
+{
+  "flows": [
     {
-        "match": {
-            "dl_vlan": 20
-        }
+      "match": {
+        "dl_vlan": 20
+      }
     }
-]
+  ]
+}
