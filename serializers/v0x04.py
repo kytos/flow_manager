@@ -74,19 +74,19 @@ class FlowSerializer13(FlowSerializer):
     @classmethod
     def _actions_from_list(cls, action_list):
         for action in action_list:
-            new_action = cls._action_from_dict(action['type'], action['value'])
+            new_action = cls._action_from_dict(action)
             if new_action:
                 yield new_action
 
     @classmethod
-    def _action_from_dict(cls, action_type, data):
-        if action_type == 'set_vlan':
-            tlv = cls._create_vlan_tlv(vlan_id=data)
+    def _action_from_dict(cls, action):
+        if action['action_type'] == 'set_vlan':
+            tlv = cls._create_vlan_tlv(vlan_id=action['vlan_id'])
             return ActionSetField(field=tlv)
-        elif action_type == 'output':
-            if data == 'controller':
+        elif action['action_type'] == 'output':
+            if action['port'] == 'controller':
                 return ActionOutput(port=PortNo.OFPP_CONTROLLER)
-            return ActionOutput(port=data)
+            return ActionOutput(port=action['port'])
 
     @staticmethod
     def _create_vlan_tlv(vlan_id):
@@ -138,11 +138,11 @@ class FlowSerializer13(FlowSerializer):
         if action.action_type == ActionType.OFPAT_SET_FIELD:
             if action.field.oxm_field == OxmOfbMatchField.OFPXMT_OFB_VLAN_VID:
                 data = int.from_bytes(action.field.oxm_value, 'big') & 4095
-                return {'type': 'set_vlan', 'value': data}
+                return {'action_type': 'set_vlan', 'vlan_id': data}
         elif action.action_type == ActionType.OFPAT_OUTPUT:
             if action.port == PortNo.OFPP_CONTROLLER:
-                return {'type': 'output', 'value': 'controller'}
-            return {'type': 'output', 'value': action.port.value}
+                return {'action_type': 'output', 'port': 'controller'}
+            return {'action_type': 'output', 'port': action.port.value}
         return {}
 
     @staticmethod
