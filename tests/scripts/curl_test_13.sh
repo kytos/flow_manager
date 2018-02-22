@@ -11,7 +11,7 @@ API_URL="http://$KYTOS_HOST:8181/api/kytos/flow_manager/v2"
 echo -n 'Press any key to install 2 flows in 00:00:00:00:00:00:00:01...'
 read
 
-CMD="curl -sH \"Content-Type: application/json\" -X POST -d @add_flow_mod.json $API_URL/flows/00:00:00:00:00:00:00:01"
+CMD="curl -sH \"Content-Type: application/json\" -X POST -d @add_flow_mod_13.json $API_URL/flows/00:00:00:00:00:00:00:01"
 echo $CMD
 eval "$CMD"
 echo

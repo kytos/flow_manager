@@ -42,8 +42,11 @@ the requests when creating and removing flows:
 
   - actions:
 
-    - set_vlan: Change the VLAN ID of the packet;
-    - output: Send the packet through a port.
+    - push_vlan: Add a new VLAN tag to the packet. The type is *tag_type*
+      ('s' for service, 'c' for client);
+    - set_vlan: Change the VLAN ID of the packet to *vlan_id*;
+    - pop_vlan: Remove the outermost VLAN tag of the packet.
+    - output: Send the packet through port *port*.
 
 .. note::
 
