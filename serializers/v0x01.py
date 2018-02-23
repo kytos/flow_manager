@@ -47,13 +47,13 @@ class FlowSerializer10(FlowSerializer):
         """Return actions found in the action list."""
         actions = []
         for action in action_list:
-            if action['type'] == 'set_vlan':
-                new_action = ActionVlanVid(vlan_id=action['value'])
-            elif action['type'] == 'output':
-                if action['value'] == 'controller':
+            if action['action_type'] == 'set_vlan':
+                new_action = ActionVlanVid(vlan_id=action['vlan_id'])
+            elif action['action_type'] == 'output':
+                if action['port'] == 'controller':
                     new_action = ActionOutput(port=Port.OFPP_CONTROLLER)
                 else:
-                    new_action = ActionOutput(port=action['value'])
+                    new_action = ActionOutput(port=action['port'])
             else:
                 continue
             actions.append(new_action)
@@ -73,15 +73,15 @@ class FlowSerializer10(FlowSerializer):
         actions_list = []
         for action in flow_stats.actions:
             if action.action_type == ActionType.OFPAT_SET_VLAN_VID:
-                actions_list.append({'type': 'set_vlan', 'value':
-                                     action.vlan_id.value})
+                actions_list.append({'action_type': 'set_vlan',
+                                     'vlan_id': action.vlan_id.value})
             elif action.action_type == ActionType.OFPAT_OUTPUT:
                 if action.port == Port.OFPP_CONTROLLER:
-                    actions_list.append({'type': 'output', 'value':
-                                         'controller'})
+                    actions_list.append({'action_type': 'output',
+                                         'port': 'controller'})
                 else:
-                    actions_list.append({'type': 'output', 'value':
-                                     action.port.value})
+                    actions_list.append({'action_type': 'output',
+                                         'port': action.port.value})
 
         flow_dict.update({'match': match_dict, 'actions': actions_list})
         return flow_dict

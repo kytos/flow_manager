@@ -38,7 +38,7 @@ paths:
           schema:
             type: object
             properties:
-              flow:
+              flows:
                 type: array
                 items:
                   $ref: '#/components/schemas/Flow'
@@ -81,7 +81,7 @@ paths:
           schema:
             type: object
             properties:
-              flow:
+              flows:
                 type: array
                 items:
                   $ref: '#/components/schemas/Flow'
@@ -112,7 +112,7 @@ paths:
           schema:
             type: object
             properties:
-              flow:
+              flows:
                 type: array
                 items:
                   $ref: '#/components/schemas/Flow'
@@ -136,7 +136,7 @@ paths:
           schema:
             type: object
             properties:
-              flow:
+              flows:
                 type: array
                 items:
                   $ref: '#/components/schemas/Flow'
@@ -205,15 +205,15 @@ components:
             type: int
             format: int16
             example: 7
-        example:
-        - {
-            "action_type": "output",
-            "port": 42
-          }
-        - {
-            "action_type": "set_vlan",
-            "vlan_id": 42
-          }
+      example:
+      - {
+          "action_type": "output",
+          "port": 42
+        }
+      - {
+          "action_type": "set_vlan",
+          "vlan_id": 42
+        }
     Flow:
       type: object
       properties:

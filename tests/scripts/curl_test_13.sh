@@ -6,12 +6,12 @@ if [ -z "$KYTOS_HOST" ]; then
     exit
 fi
 
-API_URL="http://$KYTOS_HOST:8181/api/kytos/flow_manager/v1"
+API_URL="http://$KYTOS_HOST:8181/api/kytos/flow_manager/v2"
 
 echo -n 'Press any key to install 2 flows in 00:00:00:00:00:00:00:01...'
 read
 
-CMD="curl -sH \"Content-Type: application/json\" -X POST -d @add_flow_mod.json $API_URL/flows/00:00:00:00:00:00:00:01"
+CMD="curl -sH \"Content-Type: application/json\" -X POST -d @add_flow_mod_13.json $API_URL/flows/00:00:00:00:00:00:00:01"
 echo $CMD
 eval "$CMD"
 echo
@@ -20,7 +20,7 @@ echo
 function list_vlans {
     echo -n 'Flows are updated every 5 seconds by default. Wait the interval and press any key.'
     read
-    CMD="curl -s http://$KYTOS_HOST:8181/api/kytos/flow_manager/v1/flows/00:00:00:00:00:00:00:01 | python -m json.tool | grep dl_vlan\\\""
+    CMD="curl -s $API_URL/flows/00:00:00:00:00:00:00:01 | python -m json.tool | grep dl_vlan\\\""
     echo $CMD
     user_input='n'
     while [[ $user_input == 'n' || $user_input == 'N' ]]; do

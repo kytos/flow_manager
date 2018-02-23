@@ -1,0 +1,38 @@
+{
+  "flows": [
+    {
+      "priority": 200,
+      "match": {
+        "dl_vlan": 20,
+        "in_port": 2
+      },
+      "actions": [
+        {
+          "action_type": "set_vlan",
+          "vlan_id": 10
+	},
+        {
+          "action_type": "output",
+          "port": 5
+	}
+      ]
+    },
+    {
+      "priority": 200,
+      "match": {
+        "dl_vlan": 21,
+        "in_port": 2
+      },
+      "actions": [
+        {
+          "action_type": "set_vlan",
+          "vlan_id": 10
+	},
+        {
+          "action_type": "output",
+          "port": 5
+	}
+      ]
+    }
+  ]
+}

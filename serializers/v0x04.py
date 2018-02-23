@@ -2,7 +2,9 @@
 from itertools import chain
 
 from pyof.foundation.basic_types import HWAddress, IPAddress
-from pyof.v0x04.common.action import ActionOutput, ActionSetField, ActionType
+from pyof.foundation.network_types import EtherType
+from pyof.v0x04.common.action import (ActionOutput, ActionPopVLAN, ActionPush,
+                                      ActionSetField, ActionType)
 from pyof.v0x04.common.flow_instructions import InstructionType as IType
 from pyof.v0x04.common.flow_instructions import InstructionApplyAction
 from pyof.v0x04.common.flow_match import OxmOfbMatchField, OxmTLV, VlanId
@@ -74,19 +76,28 @@ class FlowSerializer13(FlowSerializer):
     @classmethod
     def _actions_from_list(cls, action_list):
         for action in action_list:
-            new_action = cls._action_from_dict(action['type'], action['value'])
+            new_action = cls._action_from_dict(action)
             if new_action:
                 yield new_action
 
     @classmethod
-    def _action_from_dict(cls, action_type, data):
-        if action_type == 'set_vlan':
-            tlv = cls._create_vlan_tlv(vlan_id=data)
+    def _action_from_dict(cls, action):
+        if action['action_type'] == 'set_vlan':
+            tlv = cls._create_vlan_tlv(vlan_id=action['vlan_id'])
             return ActionSetField(field=tlv)
-        elif action_type == 'output':
-            if data == 'controller':
+        elif action['action_type'] == 'output':
+            if action['port'] == 'controller':
                 return ActionOutput(port=PortNo.OFPP_CONTROLLER)
-            return ActionOutput(port=data)
+            return ActionOutput(port=action['port'])
+        elif action['action_type'] == 'push_vlan':
+            if action['tag_type'] == 's':
+                ethertype = EtherType.VLAN_QINQ
+            else:
+                ethertype = EtherType.VLAN
+            return ActionPush(action_type=ActionType.OFPAT_PUSH_VLAN,
+                              ethertype=ethertype)
+        elif action['action_type'] == 'pop_vlan':
+            return ActionPopVLAN()
 
     @staticmethod
     def _create_vlan_tlv(vlan_id):
@@ -138,11 +149,17 @@ class FlowSerializer13(FlowSerializer):
         if action.action_type == ActionType.OFPAT_SET_FIELD:
             if action.field.oxm_field == OxmOfbMatchField.OFPXMT_OFB_VLAN_VID:
                 data = int.from_bytes(action.field.oxm_value, 'big') & 4095
-                return {'type': 'set_vlan', 'value': data}
+                return {'action_type': 'set_vlan', 'vlan_id': data}
         elif action.action_type == ActionType.OFPAT_OUTPUT:
             if action.port == PortNo.OFPP_CONTROLLER:
-                return {'type': 'output', 'value': 'controller'}
-            return {'type': 'output', 'value': action.port.value}
+                return {'action_type': 'output', 'port': 'controller'}
+            return {'action_type': 'output', 'port': action.port.value}
+        elif action.action_type == ActionType.OFPAT_PUSH_VLAN:
+            if action.ethertype == EtherType.VLAN_QINQ:
+                return {'action_type': 'push_vlan', 'tag_type': 's'}
+            return {'action_type': 'push_vlan', 'tag_type': 'c'}
+        elif action.action_type == ActionType.OFPAT_POP_VLAN:
+            return {'action_type': 'pop_vlan'}
         return {}
 
     @staticmethod
