@@ -76,7 +76,7 @@ class Main(KytosNApp):
             switches = [self.controller.get_switch_by_dpid(dpid)]
 
         if None in switches:
-            return jsonify({"reponse": "dpid not found"}), 404
+            return jsonify({"response": "dpid not found"}), 404
 
         for switch in switches:
             serializer = self._get_flow_serializer(switch)
