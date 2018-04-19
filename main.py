@@ -67,17 +67,41 @@ class Main(KytosNApp):
         """
         return self._send_flow_mods_from_request(dpid, "delete")
 
+    def _get_all_switches_enabled(self):
+        """Get a list of all switches enabled."""
+        switches = self.controller.switches.values()
+        return [switch for switch in switches if switch.enabled]
+
     def _send_flow_mods_from_request(self, dpid, command):
+        """Install FlowsMods from request."""
         flows_dict = request.get_json()
 
-        if dpid is None:
-            switches = self.controller.switches.values()
+        if flows_dict is None:
+            return jsonify({"response": 'flows dict is none.'}), 404
+
+        if dpid:
+            switch = self.controller.get_switch_by_dpid(dpid)
+            if not switch:
+                return jsonify({"response": 'dpid not found.'}), 404
+            elif switch.enabled is False:
+                return jsonify({"response": 'switch is disabled.'}), 404
+            else:
+                self._install_flows(command, flows_dict, [switch])
         else:
-            switches = [self.controller.get_switch_by_dpid(dpid)]
+            self._install_flows(command, flows_dict,
+                                self._get_all_switches_enabled())
 
-        if None in switches:
-            return jsonify({"response": "dpid not found"}), 404
+        return jsonify({"response": "FlowMod Messages Sent"})
 
+
+    def _install_flows(self, command, flows_dict, switches=[]):
+        """Execute all procedures to install flows in the switches.
+
+        Args:
+            command: Flow command to be installed
+            flows_dict: Dictionary with flows to be installed in the switches.
+            switches: A list of switches
+        """
         for switch in switches:
             serializer = self._get_flow_serializer(switch)
             flows = flows_dict.get('flows', [])
@@ -90,8 +114,6 @@ class Main(KytosNApp):
                 self._send_flow_mod(flow.switch, flow_mod)
 
             self._send_napp_event(switch, flow, command)
-
-        return jsonify({"response": "FlowMod Messages Sent"})
 
     def _send_flow_mod(self, switch, flow_mod):
         event_name = 'kytos/flow_manager.messages.out.ofpt_flow_mod'
