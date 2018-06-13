@@ -70,7 +70,7 @@ class Main(KytosNApp):
     def _get_all_switches_enabled(self):
         """Get a list of all switches enabled."""
         switches = self.controller.switches.values()
-        return [switch for switch in switches if switch.enabled]
+        return [switch for switch in switches if switch.is_enabled()]
 
     def _send_flow_mods_from_request(self, dpid, command):
         """Install FlowsMods from request."""
@@ -83,7 +83,7 @@ class Main(KytosNApp):
             switch = self.controller.get_switch_by_dpid(dpid)
             if not switch:
                 return jsonify({"response": 'dpid not found.'}), 404
-            elif switch.enabled is False:
+            elif switch.is_enabled() is False:
                 return jsonify({"response": 'switch is disabled.'}), 404
             else:
                 self._install_flows(command, flows_dict, [switch])
