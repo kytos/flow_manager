@@ -113,7 +113,7 @@ class Main(KytosNApp):
                     flow_mod = flow.as_of_add_flow_mod()
                 self._send_flow_mod(flow.switch, flow_mod)
 
-            self._send_napp_event(switch, flow, command)
+                self._send_napp_event(switch, flow, command)
 
     def _send_flow_mod(self, switch, flow_mod):
         event_name = 'kytos/flow_manager.messages.out.ofpt_flow_mod'
