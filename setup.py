@@ -8,7 +8,7 @@ import shutil
 import sys
 from abc import abstractmethod
 from pathlib import Path
-from subprocess import call, check_call
+from subprocess import CalledProcessError, call, check_call
 
 from setuptools import Command, setup
 from setuptools.command.develop import develop
@@ -45,15 +45,12 @@ class SimpleCommand(Command):
 
         Use *call* instead of *check_call* to ignore failures.
         """
-        pass
 
     def initialize_options(self):
         """Set default values for options."""
-        pass
 
     def finalize_options(self):
         """Post-process options."""
-        pass
 
 
 class Cleaner(SimpleCommand):
@@ -86,9 +83,14 @@ class Linter(SimpleCommand):
     description = 'lint Python source code'
 
     def run(self):
-        """Run pylama."""
-        print('Pylama is running. It may take several seconds...')
-        check_call('pylama setup.py tests kytos', shell=True)
+        """Run yala."""
+        print('Yala is running. It may take several seconds...')
+        try:
+            check_call('yala setup.py ./ tests', shell=True)
+            print('No linter error found.')
+        except CalledProcessError:
+            print('Linter check failed. Fix the error(s) above and try again.')
+            exit(-1)
 
 
 class CITest(SimpleCommand):
@@ -171,7 +173,7 @@ class DevelopMode(develop):
         src.symlink_to(dst)
 
 
-requirements = [i.strip() for i in open("requirements.txt").readlines()]
+REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
 
 setup(name='kytos-napps',
       version='2017.1b3',
@@ -180,7 +182,7 @@ setup(name='kytos-napps',
       author='Kytos Team',
       author_email='of-ng-dev@ncc.unesp.br',
       license='MIT',
-      install_requires=requirements,
+      install_requires=REQUIREMENTS,
       cmdclass={
           'clean': Cleaner,
           'ci': CITest,
