@@ -1,6 +1,6 @@
 """Setup script.
 
-Run "python3 setup.py --help-commands" to list all available commands and their
+Run "python3 setup --help-commands" to list all available commands and their
 descriptions.
 """
 import os
@@ -12,7 +12,6 @@ from subprocess import call, check_call
 
 from setuptools import Command, setup
 from setuptools.command.develop import develop
-from setuptools.command.egg_info import egg_info
 from setuptools.command.install import install
 
 if 'bdist_wheel' in sys.argv:
@@ -23,17 +22,13 @@ if 'VIRTUAL_ENV' in os.environ:
     BASE_ENV = Path(os.environ['VIRTUAL_ENV'])
 else:
     BASE_ENV = Path('/')
-
-NAPP_NAME = 'flow_manager'
-NAPP_VERSION = '2.2.1'
-
 # Kytos var folder
 VAR_PATH = BASE_ENV / 'var' / 'lib' / 'kytos'
 # Path for enabled NApps
-ENABLED_PATH = VAR_PATH / 'napps'
+ENABL_PATH = VAR_PATH / 'napps'
 # Path to install NApps
-INSTALLED_PATH = VAR_PATH / 'napps' / '.installed'
-CURRENT_DIR = Path('.').resolve()
+INSTL_PATH = VAR_PATH / 'napps' / '.installed'
+CURR_DIR = Path('.').resolve()
 
 # NApps enabled by default
 CORE_NAPPS = ['of_core']
@@ -50,12 +45,15 @@ class SimpleCommand(Command):
 
         Use *call* instead of *check_call* to ignore failures.
         """
+        pass
 
     def initialize_options(self):
         """Set default values for options."""
+        pass
 
     def finalize_options(self):
         """Post-process options."""
+        pass
 
 
 class Cleaner(SimpleCommand):
@@ -77,7 +75,8 @@ class TestCoverage(SimpleCommand):
 
     def run(self):
         """Run unittest quietly and display coverage report."""
-        cmd = 'coverage3 run -m unittest && coverage3 report'
+        cmd = 'coverage3 run -m unittest discover -qs napps/kytos' \
+              ' && coverage3 report'
         call(cmd, shell=True)
 
 
@@ -87,9 +86,9 @@ class Linter(SimpleCommand):
     description = 'lint Python source code'
 
     def run(self):
-        """Run yala."""
-        print('Yala is running. It may take several seconds...')
-        check_call('yala *.py', shell=True)
+        """Run pylama."""
+        print('Pylama is running. It may take several seconds...')
+        check_call('pylama setup.py tests kytos', shell=True)
 
 
 class CITest(SimpleCommand):
@@ -99,7 +98,7 @@ class CITest(SimpleCommand):
 
     def run(self):
         """Run unit tests with coverage, doc tests and linter."""
-        cmds = ['python3.6 setup.py ' + cmd
+        cmds = ['python setup.py ' + cmd
                 for cmd in ('coverage', 'lint')]
         cmd = ' && '.join(cmds)
         check_call(cmd, shell=True)
@@ -111,12 +110,12 @@ class KytosInstall:
     @staticmethod
     def enable_core_napps():
         """Enable a NAPP by creating a symlink."""
-        (ENABLED_PATH / 'kytos').mkdir(parents=True, exist_ok=True)
+        (ENABL_PATH / 'kytos').mkdir(parents=True, exist_ok=True)
         for napp in CORE_NAPPS:
             napp_path = Path('kytos', napp)
-            src = ENABLED_PATH / napp_path
-            dst = INSTALLED_PATH / napp_path
-            symlink_if_different(src, dst)
+            src = ENABL_PATH / napp_path
+            dst = INSTL_PATH / napp_path
+            src.symlink_to(dst)
 
 
 class InstallMode(install):
@@ -125,24 +124,8 @@ class InstallMode(install):
     description = 'To install NApps, use kytos-utils. Devs, see "develop".'
 
     def run(self):
-        """Direct users to use kytos-utils to install NApps."""
+        """Create of_core as default napps enabled."""
         print(self.description)
-
-
-class EggInfo(egg_info):
-    """Prepare files to be packed."""
-
-    def run(self):
-        """Build css."""
-        self._install_deps_wheels()
-        super().run()
-
-    @staticmethod
-    def _install_deps_wheels():
-        """Python wheels are much faster (no compiling)."""
-        print('Installing dependencies...')
-        check_call([sys.executable, '-m', 'pip', 'install', '-r',
-                    'requirements/run.in'])
 
 
 class DevelopMode(develop):
@@ -152,16 +135,16 @@ class DevelopMode(develop):
     created on the system aiming the current source code.
     """
 
-    description = 'Install NApps in development mode'
+    description = 'install NApps in development mode'
 
     def run(self):
         """Install the package in a developer mode."""
         super().run()
         if self.uninstall:
-            shutil.rmtree(str(ENABLED_PATH), ignore_errors=True)
+            shutil.rmtree(str(ENABL_PATH), ignore_errors=True)
         else:
             self._create_folder_symlinks()
-            # self._create_file_symlinks()
+            self._create_file_symlinks()
             KytosInstall.enable_core_napps()
 
     @staticmethod
@@ -171,53 +154,33 @@ class DevelopMode(develop):
         ./napps/kytos/napp_name will generate a link in
         var/lib/kytos/napps/.installed/kytos/napp_name.
         """
-        links = INSTALLED_PATH / 'kytos'
+        links = INSTL_PATH / 'kytos'
         links.mkdir(parents=True, exist_ok=True)
-        code = CURRENT_DIR
-        src = links / NAPP_NAME
-        symlink_if_different(src, code)
-
-        (ENABLED_PATH / 'kytos').mkdir(parents=True, exist_ok=True)
-        dst = ENABLED_PATH / Path('kytos', NAPP_NAME)
-        symlink_if_different(dst, src)
+        code = CURR_DIR / 'napps' / 'kytos'
+        for path in code.iterdir():
+            last_folder = path.parts[-1]
+            if path.is_dir() and last_folder != '__pycache__':
+                src = links / last_folder
+                src.symlink_to(path)
 
     @staticmethod
     def _create_file_symlinks():
         """Symlink to required files."""
-        src = ENABLED_PATH / '__init__.py'
-        dst = CURRENT_DIR / 'napps' / '__init__.py'
-        symlink_if_different(src, dst)
+        src = ENABL_PATH / '__init__.py'
+        dst = CURR_DIR / 'napps' / '__init__.py'
+        src.symlink_to(dst)
 
 
-def symlink_if_different(path, target):
-    """Force symlink creation if it points anywhere else."""
-    # print(f"symlinking {path} to target: {target}...", end=" ")
-    if not path.exists():
-        # print(f"path doesn't exist. linking...")
-        path.symlink_to(target)
-    elif not path.samefile(target):
-        # print(f"path exists, but is different. removing and linking...")
-        # Exists but points to a different file, so let's replace it
-        path.unlink()
-        path.symlink_to(target)
+requirements = [i.strip() for i in open("requirements.txt").readlines()]
 
-
-setup(name=f'kytos_{NAPP_NAME}',
-      version=NAPP_VERSION,
-      description='Core NApps developed by the Kytos Team',
-      url=f'http://github.com/kytos/{NAPP_NAME}',
+setup(name='kytos-napps',
+      version='2017.1b3',
+      description='Core Napps developed by Kytos Team',
+      url='http://github.com/kytos/kytos-napps',
       author='Kytos Team',
       author_email='of-ng-dev@ncc.unesp.br',
       license='MIT',
-      install_requires=['setuptools >= 36.0.1'],
-      extras_require={
-          'dev': [
-              'coverage',
-              'pip-tools',
-              'yala',
-              'tox',
-          ],
-      },
+      install_requires=requirements,
       cmdclass={
           'clean': Cleaner,
           'ci': CITest,
@@ -225,7 +188,6 @@ setup(name=f'kytos_{NAPP_NAME}',
           'develop': DevelopMode,
           'install': InstallMode,
           'lint': Linter,
-          'egg_info': EggInfo,
       },
       zip_safe=False,
       classifiers=[
