@@ -21,7 +21,4 @@ build:
         override:
             -
                 command: 'python setup.py ci'
-                coverage:
-                    file: '.coverage'
-                    config_file: '.coveragerc'
 format: 'py-cc'
