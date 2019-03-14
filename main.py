@@ -93,7 +93,6 @@ class Main(KytosNApp):
 
         return jsonify({"response": "FlowMod Messages Sent"})
 
-
     def _install_flows(self, command, flows_dict, switches=[]):
         """Execute all procedures to install flows in the switches.
 
