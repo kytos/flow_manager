@@ -24,6 +24,16 @@ Fixed
 Security
 ========
 
+[2.2.2] - 2019-03-15
+********************
+Changed
+=======
+- Continuous integration enabled at scrutinizer.
+
+Fixed
+=====
+- Improve code organization and fix some linter issues.
+
 [2.2.1] - 2018-12-14
 ********************
 

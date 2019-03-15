@@ -25,7 +25,7 @@ else:
     BASE_ENV = Path('/')
 
 NAPP_NAME = 'flow_manager'
-NAPP_VERSION = '2.2.1'
+NAPP_VERSION = '2.2.2'
 
 # Kytos var folder
 VAR_PATH = BASE_ENV / 'var' / 'lib' / 'kytos'
