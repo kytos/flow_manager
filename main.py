@@ -60,6 +60,8 @@ class Main(KytosNApp):
 
     @rest('v2/delete', methods=['POST'])
     @rest('v2/delete/<dpid>', methods=['POST'])
+    @rest('v2/flows', methods=['DELETE'])
+    @rest('v2/flows/<dpid>', methods=['DELETE'])
     def delete(self, dpid=None):
         """Delete existing flows in the switch identified by dpid.
 

@@ -49,6 +49,29 @@ paths:
            description: FlowMod messages sent.
         '400':
            description: Invalid JSON flow.
+    delete:
+      tags:
+        - Delete
+      summary: Remove matching flows from all known datapaths.
+      parameters:
+        - in: body
+          name: body
+          description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
+          required: true
+          schema:
+            type: object
+            properties:
+              flows:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flow'
+      consumes:
+        - application/json
+      responses:
+        '202':
+          description: FlowMod messages sent.
+        '400':
+           description: Invalid JSON flow.
   '/api/kytos/flow_manager/v2/flows/{dpid}':
     get:
       tags:
@@ -99,6 +122,36 @@ paths:
            description: Invalid JSON flow.
         '404':
           description: Datapath not found.
+    delete:
+      tags:
+        - Delete
+      summary: Remove matching flows from a single datapath.
+      parameters:
+        - in: body
+          name: body
+          description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
+          required: true
+          schema:
+            type: object
+            properties:
+              flows:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flow'
+        - name: dpid
+          in: path
+          required: true
+          type: string
+          description: DPID of the target datapath.
+      consumes:
+        - application/json
+      responses:
+        '202':
+          description: FlowMod messages sent.
+        '400':
+           description: Invalid JSON flow.
+        '404':
+          description: Datapath not found.
   /api/kytos/flow_manager/v2/delete:
     post:
       tags:
@@ -118,6 +171,7 @@ paths:
                   $ref: '#/components/schemas/Flow'
       consumes:
         - application/json
+      deprecated: true
       responses:
         '202':
           description: FlowMod messages sent.
@@ -147,6 +201,7 @@ paths:
           description: DPID of the target datapath.
       consumes:
         - application/json
+      deprecated: true
       responses:
         '202':
           description: FlowMod messages sent.
