@@ -1,6 +1,7 @@
 """kytos/flow_manager NApp installs, lists and deletes switch flows."""
 from flask import jsonify, request
 from kytos.core import KytosEvent, KytosNApp, log, rest
+from kytos.core.helpers import listen_to
 
 from napps.kytos.of_core.v0x01.flow import Flow as Flow10
 from napps.kytos.of_core.v0x04.flow import Flow as Flow13
@@ -16,6 +17,7 @@ class Main(KytosNApp):
         Users shouldn't call this method directly.
         """
         log.debug("flow-manager starting")
+        self.flow_mods_sent = {}
 
     def execute(self):
         """Run once on NApp 'start' or in a loop.
@@ -111,6 +113,7 @@ class Main(KytosNApp):
                 elif command == "add":
                     flow_mod = flow.as_of_add_flow_mod()
                 self._send_flow_mod(flow.switch, flow_mod)
+                self.flow_mods_sent[flow_mod.header.xid] = flow
 
                 self._send_napp_event(switch, flow, command)
 
@@ -129,6 +132,8 @@ class Main(KytosNApp):
             name = 'kytos/flow_manager.flow.added'
         elif command == 'delete':
             name = 'kytos/flow_manager.flow.removed'
+        elif command == 'error':
+            name = 'kytos/flow_manager.flow.error'
         content = {'datapath': switch,
                    'flow': flow}
         event_app = KytosEvent(name, content)
@@ -139,3 +144,17 @@ class Main(KytosNApp):
         """Return the serializer with for the switch OF protocol version."""
         version = switch.connection.protocol.version
         return Flow10 if version == 0x01 else Flow13
+
+    @listen_to('.*.of_core.*.ofpt_error')
+    def handle_errors(self, event):
+        """Receive OpenFlow error and send a event.
+
+            The event is sent only if the error is related to a request made
+            by flow_manager.
+        """
+        xid = event.content["message"].header.xid.value
+        try:
+            flow = self.flow_mods_sent[xid]
+            self._send_napp_event(flow.switch, flow, 'error')
+        except KeyError:
+            pass
