@@ -163,7 +163,8 @@ class Main(KytosNApp):
         """
         xid = event.content["message"].header.xid.value
         try:
-            flow = self.flow_mods_sent[xid]
-            self._send_napp_event(flow.switch, flow, 'error')
+            flow = self._flow_mods_sent[xid]
         except KeyError:
             pass
+        else:
+            self._send_napp_event(flow.switch, flow, 'error')
