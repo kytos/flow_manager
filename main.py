@@ -8,6 +8,7 @@ from napps.kytos.of_core.v0x01.flow import Flow as Flow10
 from napps.kytos.of_core.v0x04.flow import Flow as Flow13
 
 from .settings import FLOWS_DICT_MAX_SIZE
+from .exceptions import InvalidCommandError
 
 
 class Main(KytosNApp):
@@ -116,6 +117,8 @@ class Main(KytosNApp):
                     flow_mod = flow.as_of_delete_flow_mod()
                 elif command == "add":
                     flow_mod = flow.as_of_add_flow_mod()
+                else:
+                    raise InvalidCommandError
                 self._send_flow_mod(flow.switch, flow_mod)
                 self._add_flow_mod_sent(flow_mod.header.xid, flow)
 
@@ -143,6 +146,8 @@ class Main(KytosNApp):
             name = 'kytos/flow_manager.flow.removed'
         elif command == 'error':
             name = 'kytos/flow_manager.flow.error'
+        else:
+            raise InvalidCommandError
         content = {'datapath': switch,
                    'flow': flow}
         event_app = KytosEvent(name, content)
