@@ -4,10 +4,10 @@ from flask import jsonify, request
 from kytos.core import KytosEvent, KytosNApp, log, rest
 from kytos.core.helpers import listen_to
 
-from napps.kytos.of_core.v0x01.flow import Flow as Flow10
-from napps.kytos.of_core.v0x04.flow import Flow as Flow13
+from napps.kytos.of_core.flow import FlowFactory
 
 from .settings import FLOWS_DICT_MAX_SIZE
+from .exceptions import InvalidCommandError
 
 
 class Main(KytosNApp):
@@ -108,7 +108,7 @@ class Main(KytosNApp):
             switches: A list of switches
         """
         for switch in switches:
-            serializer = self._get_flow_serializer(switch)
+            serializer = FlowFactory.get_class(switch)
             flows = flows_dict.get('flows', [])
             for flow_dict in flows:
                 flow = serializer.from_dict(flow_dict, switch)
@@ -116,12 +116,15 @@ class Main(KytosNApp):
                     flow_mod = flow.as_of_delete_flow_mod()
                 elif command == "add":
                     flow_mod = flow.as_of_add_flow_mod()
+                else:
+                    raise InvalidCommandError
                 self._send_flow_mod(flow.switch, flow_mod)
                 self._add_flow_mod_sent(flow_mod.header.xid, flow)
 
                 self._send_napp_event(switch, flow, command)
 
     def _add_flow_mod_sent(self, xid, flow):
+        """Add the flow mod to the list of flow mods sent."""
         if len(self._flow_mods_sent) >= self._flow_mods_sent_max_size:
             self._flow_mods_sent.popitem(last=False)
         self._flow_mods_sent[xid] = flow
@@ -143,16 +146,12 @@ class Main(KytosNApp):
             name = 'kytos/flow_manager.flow.removed'
         elif command == 'error':
             name = 'kytos/flow_manager.flow.error'
+        else:
+            raise InvalidCommandError
         content = {'datapath': switch,
                    'flow': flow}
         event_app = KytosEvent(name, content)
         self.controller.buffers.app.put(event_app)
-
-    @staticmethod
-    def _get_flow_serializer(switch):
-        """Return the serializer with for the switch OF protocol version."""
-        version = switch.connection.protocol.version
-        return Flow10 if version == 0x01 else Flow13
 
     @listen_to('.*.of_core.*.ofpt_error')
     def handle_errors(self, event):
