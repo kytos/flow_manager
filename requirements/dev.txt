@@ -9,7 +9,7 @@
 -e git+https://github.com/kytos/python-openflow.git#egg=python-openflow
 astroid==2.2.5            # via pylint
 click==7.0                # via flask, pip-tools
-coverage==4.5.3
+coverage==5.0.3
 docopt==0.6.2             # via yala
 filelock==3.0.10          # via tox
 flask==1.0.2

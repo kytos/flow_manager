@@ -2,6 +2,8 @@
 Overview
 ########
 
+|License| |Build| |Coverage| |Quality|
+
 .. attention::
 
     THIS NAPP IS STILL EXPERIMENTAL AND ITS EVENTS, METHODS AND STRUCTURES MAY
@@ -119,3 +121,17 @@ Rest API
 You can find a list of the available endpoints and example input/output in the
 'REST API' tab in this NApp's webpage in the `Kytos NApps Server
 <https://napps.kytos.io/kytos/flow_manager>`_.
+
+.. TAGs
+
+.. |License| image:: https://img.shields.io/github/license/kytos/kytos.svg
+   :target: https://github.com/kytos/flow_manager/blob/master/LICENSE
+.. |Build| image:: https://scrutinizer-ci.com/g/kytos/flow_manager/badges/build.png?b=master
+  :alt: Build status
+  :target: https://scrutinizer-ci.com/g/kytos/flow_manager/?branch=master
+.. |Coverage| image:: https://scrutinizer-ci.com/g/kytos/flow_manager/badges/coverage.png?b=master
+  :alt: Code coverage
+  :target: https://scrutinizer-ci.com/g/kytos/flow_manager/?branch=master
+.. |Quality| image:: https://scrutinizer-ci.com/g/kytos/flow_manager/badges/quality-score.png?b=master
+  :alt: Code-quality score
+  :target: https://scrutinizer-ci.com/g/kytos/flow_manager/?branch=master
