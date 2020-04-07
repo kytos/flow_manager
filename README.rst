@@ -73,6 +73,12 @@ To install this NApp, run:
 
    $ kytos napps install kytos/flow_manager
 
+############
+Requirements
+############
+
+- kytos/of_core
+
 ######
 Events
 ######
