@@ -1,7 +1,6 @@
 """Tests from flow_manager napp."""
-
-import sys
 import os
+import sys
 from pathlib import Path
 
 if 'VIRTUAL_ENV' in os.environ:
@@ -12,5 +11,3 @@ else:
 NAPPS_PATH = BASE_ENV / '/var/lib/kytos/'
 
 sys.path.insert(0, str(NAPPS_PATH))
-
-

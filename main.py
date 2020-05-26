@@ -1,13 +1,14 @@
 """kytos/flow_manager NApp installs, lists and deletes switch flows."""
 from collections import OrderedDict
+
 from flask import jsonify, request
+
 from kytos.core import KytosEvent, KytosNApp, log, rest
 from kytos.core.helpers import listen_to
-
 from napps.kytos.of_core.flow import FlowFactory
 
-from .settings import FLOWS_DICT_MAX_SIZE
 from .exceptions import InvalidCommandError
+from .settings import FLOWS_DICT_MAX_SIZE
 
 
 class Main(KytosNApp):
@@ -29,7 +30,6 @@ class Main(KytosNApp):
         The execute method is called by the run method of KytosNApp class.
         Users shouldn't call this method directly.
         """
-        pass
 
     def shutdown(self):
         """Shutdown routine of the NApp."""
@@ -157,8 +157,8 @@ class Main(KytosNApp):
     def handle_errors(self, event):
         """Receive OpenFlow error and send a event.
 
-            The event is sent only if the error is related to a request made
-            by flow_manager.
+        The event is sent only if the error is related to a request made
+        by flow_manager.
         """
         xid = event.content["message"].header.xid.value
         try:

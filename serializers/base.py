@@ -24,9 +24,7 @@ class FlowSerializer(ABC):
     @abstractmethod
     def from_dict(self, dictionary):
         """Return a FlowMod instance created from a serialized dictionary."""
-        pass
 
     @abstractmethod
     def to_dict(self, flow_stats):
         """Return a serialized dictionary for a FlowStats message."""
-        pass

@@ -4,7 +4,6 @@ from unittest.mock import Mock
 
 from kytos.core import Controller
 from kytos.core.config import KytosConfig
-
 from napps.kytos.flow_manager.main import Main
 
 
