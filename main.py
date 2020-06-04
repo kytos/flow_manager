@@ -138,7 +138,7 @@ class Main(KytosNApp):
         event = KytosEvent(name=event_name, content=content)
         self.controller.buffers.msg_out.put(event)
 
-    def _send_napp_event(self, switch, flow, command):
+    def _send_napp_event(self, switch, flow, command, **kwargs):
         """Send an Event to other apps informing about a FlowMod."""
         if command == 'add':
             name = 'kytos/flow_manager.flow.added'
@@ -150,6 +150,7 @@ class Main(KytosNApp):
             raise InvalidCommandError
         content = {'datapath': switch,
                    'flow': flow}
+        content.update(kwargs)
         event_app = KytosEvent(name, content)
         self.controller.buffers.app.put(event_app)
 
@@ -161,9 +162,12 @@ class Main(KytosNApp):
             by flow_manager.
         """
         xid = event.content["message"].header.xid.value
+        error_type = event.content["message"].error_type
+        error_code = event.content["message"].code
         try:
             flow = self._flow_mods_sent[xid]
         except KeyError:
             pass
         else:
-            self._send_napp_event(flow.switch, flow, 'error')
+            self._send_napp_event(flow.switch, flow, 'error', 
+                                  error_type=error_type, error_code=error_code)                             
