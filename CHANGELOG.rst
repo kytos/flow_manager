@@ -11,6 +11,7 @@ Added
 - Added listener to handle OpenFlow errors sent by of_core.
 - Started to use FlowFactory to check which version of Flow to use.
 - Added support for automated tests and CI with Travis.
+- Added tags decorator to run tests by type and size.
 
 Changed
 =======
