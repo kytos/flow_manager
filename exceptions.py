@@ -1,2 +1,5 @@
+"""Exceptions raised by this NApp."""
+
+
 class InvalidCommandError(Exception):
-    pass
+    """Command has an invalid value."""

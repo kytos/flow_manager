@@ -14,6 +14,7 @@ from pyof.v0x04.controller2switch.flow_mod import FlowMod
 from napps.kytos.flow_manager.serializers.base import FlowSerializer
 
 
+# pylint: disable=too-many-return-statements, inconsistent-return-statements
 class FlowSerializer13(FlowSerializer):
     """Flow serializer for OpenFlow 1.3."""
 
