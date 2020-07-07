@@ -171,5 +171,5 @@ class Main(KytosNApp):
         except KeyError:
             pass
         else:
-            self._send_napp_event(flow.switch, flow, 'error', 
-                                  error_type=error_type, error_code=error_code)                             
+            self._send_napp_event(flow.switch, flow, 'error',
+                                  error_type=error_type, error_code=error_code)
