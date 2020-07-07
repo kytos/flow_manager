@@ -8,10 +8,12 @@ file.
 ********************************
 Added
 =====
-- Added listener to handle OpenFlow errors sent by of_core.
-- Started to use FlowFactory to check which version of Flow to use.
-- Added support for automated tests and CI with Travis.
-- Added tags decorator to run tests by type and size.
+- Added listener to handle OpenFlow errors sent by ``of_core``.
+- Added HTTP DELETE method support to REST API on ``/flows``.
+- Added the error code of the flow mod message to the content
+  of the resulting event.
+- Started to use ``FlowFactory`` to check which version of ``Flow`` to use.
+- Added ``@tags`` decorator to run tests by type and size.
 
 Changed
 =======
@@ -22,12 +24,9 @@ Deprecated
 Removed
 =======
 
-Fixed
-=====
-- Fixed Scrutinizer coverage error.
-
 Security
 ========
+
 
 [2.2.2] - 2019-03-15
 ********************
