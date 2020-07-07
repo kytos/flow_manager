@@ -172,8 +172,11 @@ class TestMain(TestCase):
 
         message = MagicMock()
         message.header.xid.value = 0
+        message.error_type = 2
+        message.code = 5
         event = get_kytos_event_mock(name='.*.of_core.*.ofpt_error',
                                      content={'message': message})
         self.napp.handle_errors(event)
 
-        mock_send_napp_event.assert_called_with(flow.switch, flow, 'error')
+        mock_send_napp_event.assert_called_with(flow.switch, flow, 'error',
+                                                error_code=5, error_type=2)
