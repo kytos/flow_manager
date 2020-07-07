@@ -8,6 +8,7 @@ file.
 ********************************
 Added
 =====
+- Added unit tests, increasing coverage to 97%.
 - Added listener to handle OpenFlow errors sent by ``of_core``.
 - Added HTTP DELETE method support to REST API on ``/flows``.
 - Added the error code of the flow mod message to the content
