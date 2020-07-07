@@ -18,11 +18,21 @@ Deprecated
 Removed
 =======
 
-Fixed
-=====
-
 Security
 ========
+
+[2.3] - 2020-07-07
+******************
+Added
+=====
+- Added unit tests, increasing coverage to 97%.
+- Added listener to handle OpenFlow errors sent by ``of_core``.
+- Added HTTP DELETE method support to REST API on ``/flows``.
+- Added the error code of the flow mod message to the content
+  of the resulting event.
+- Started to use ``FlowFactory`` to check which version of ``Flow`` to use.
+- Added ``@tags`` decorator to run tests by type and size.
+
 
 [2.2.2] - 2019-03-15
 ********************
@@ -34,12 +44,14 @@ Fixed
 =====
 - Improve code organization and fix some linter issues.
 
+
 [2.2.1] - 2018-12-14
 ********************
 
 Fixed
 =====
  - Fix `flow` being used outside of its scope when installing a flow.
+
 
 [2.2.0] - 2018-06-15
 ********************
@@ -48,6 +60,7 @@ Changed
 =======
 - Send flow_mod to only enabled switches.
 - Change enabled attributes to use the method is_enabled.
+
 
 [2.1.0] - 2018-04-20
 ********************
@@ -63,6 +76,7 @@ Fixed
 - Fix actions to have correct type and value pair.
 - Fix OpenAPI.yml.
 - Some type fixes.
+
 
 [2.0.0] - 2017-11-30
 ********************
@@ -86,6 +100,7 @@ Changed
 - Change HTTP success code for add flows.
 - Change Napp name  to `kytos/flow_manager` and tags
 
+
 [1.1.3] - 2017-06-16
 ********************
 Added
@@ -99,4 +114,3 @@ Added
 Added
 =====
 - Created application to register REST endpoints to manage flows.
-
