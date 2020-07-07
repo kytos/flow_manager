@@ -30,23 +30,42 @@ paths:
       tags:
         - Add
       summary: Insert flows in all known datapaths.
-      parameters:
-        - in: body
-          name: body
-          description: List of flows to be inserted.
-          required: true
-          schema:
-            type: object
-            properties:
-              flows:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Flow'
-      consumes:
-        - application/json
+      requestBody:
+        description: List of flows to be inserted.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                flows:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Flow'
       responses:
         '202':
            description: FlowMod messages sent.
+        '400':
+           description: Invalid JSON flow.
+    delete:
+      tags:
+        - Delete
+      summary: Remove matching flows from all known datapaths.
+      requestBody:
+        description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                flows:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Flow'
+      responses:
+        '202':
+          description: FlowMod messages sent.
         '400':
            description: Invalid JSON flow.
   '/api/kytos/flow_manager/v2/flows/{dpid}':
@@ -58,7 +77,8 @@ paths:
         - name: dpid
           in: path
           required: true
-          type: string
+          schema:
+            type: string
           description: DPID of the target datapath.
       responses:
         '200':
@@ -73,25 +93,55 @@ paths:
       tags:
         - Add
       summary: Insert flows in a single datapath.
+      requestBody:
+        description: List of flows to be inserted.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                flows:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Flow'
       parameters:
-        - in: body
-          name: body
-          description: List of flows to be inserted.
-          required: true
-          schema:
-            type: object
-            properties:
-              flows:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Flow'
         - name: dpid
           in: path
           required: true
-          type: string
+          schema:
+           type: string
           description: DPID of the target datapath.
-      consumes:
-        - application/json
+      responses:
+        '202':
+          description: FlowMod messages sent.
+        '400':
+           description: Invalid JSON flow.
+        '404':
+          description: Datapath not found.
+    delete:
+      tags:
+        - Delete
+      summary: Remove matching flows from a single datapath.
+      requestBody:
+        description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                flows:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Flow'
+      parameters:
+        - name: dpid
+          in: path
+          required: true
+          schema:
+            type: string
+          description: DPID of the target datapath.
       responses:
         '202':
           description: FlowMod messages sent.
@@ -104,20 +154,19 @@ paths:
       tags:
         - Delete
       summary: Remove matching flows from all known datapaths.
-      parameters:
-        - in: body
-          name: body
-          description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
-          required: true
-          schema:
-            type: object
-            properties:
-              flows:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Flow'
-      consumes:
-        - application/json
+      requestBody:
+        description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                flows:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Flow'
+      deprecated: true
       responses:
         '202':
           description: FlowMod messages sent.
@@ -128,25 +177,26 @@ paths:
       tags:
         - Delete
       summary: Remove matching flows from a single datapath.
+      requestBody:
+        description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                flows:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Flow'
       parameters:
-        - in: body
-          name: body
-          description: Parameters of flows to be removed. The NApp will send a FlowMod message requesting the removal of flows with those parameters.
-          required: true
-          schema:
-            type: object
-            properties:
-              flows:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Flow'
         - name: dpid
           in: path
           required: true
-          type: string
+          schema:
+            type: string
           description: DPID of the target datapath.
-      consumes:
-        - application/json
+      deprecated: true
       responses:
         '202':
           description: FlowMod messages sent.
@@ -202,7 +252,7 @@ components:
             enum: [set_vlan, output]
             example: 'output'
           value:
-            type: int
+            type: integer
             format: int16
             example: 7
       example:
