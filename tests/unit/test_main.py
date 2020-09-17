@@ -2,8 +2,9 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from kytos.lib.helpers import (get_controller_mock, get_kytos_event_mock,
-                               get_switch_mock, get_test_client)
+from kytos.lib.helpers import (get_connection_mock, get_controller_mock,
+                               get_kytos_event_mock, get_switch_mock,
+                               get_test_client)
 
 
 # pylint: disable=protected-access
@@ -170,12 +171,22 @@ class TestMain(TestCase):
         flow = MagicMock()
         self.napp._flow_mods_sent[0] = flow
 
+        switch = get_switch_mock("00:00:00:00:00:00:00:01")
+        switch.connection = get_connection_mock(
+            0x04, get_switch_mock("00:00:00:00:00:00:00:02"))
+
+        protocol = MagicMock()
+        protocol.unpack.return_value = 'error_packet'
+
+        switch.connection.protocol = protocol
+
         message = MagicMock()
         message.header.xid.value = 0
         message.error_type = 2
         message.code = 5
         event = get_kytos_event_mock(name='.*.of_core.*.ofpt_error',
-                                     content={'message': message})
+                                     content={'message': message,
+                                              'source': switch.connection})
         self.napp.handle_errors(event)
 
         mock_send_napp_event.assert_called_with(flow.switch, flow, 'error',

@@ -2,6 +2,10 @@
 from collections import OrderedDict
 
 from flask import jsonify, request
+from pyof.v0x01.asynchronous.error_msg import BadActionCode as BadActionCode01
+from pyof.v0x01.common.phy_port import PortConfig as PortConfig01
+from pyof.v0x04.asynchronous.error_msg import BadActionCode as BadActionCode04
+from pyof.v0x04.common.port import PortConfig as PortConfig04
 
 from kytos.core import KytosEvent, KytosNApp, log, rest
 from kytos.core.helpers import listen_to
@@ -163,9 +167,33 @@ class Main(KytosNApp):
         The event is sent only if the error is related to a request made
         by flow_manager.
         """
-        xid = event.content["message"].header.xid.value
-        error_type = event.content["message"].error_type
-        error_code = event.content["message"].code
+        message = event.content["message"]
+        connection = event.source
+        switch = connection.switch
+
+        error_data = message.data.pack()
+        # Get the packet responsible for the error
+        error_packet = connection.protocol.unpack(error_data)
+
+        if (message.code == BadActionCode01.OFPBAC_BAD_OUT_PORT or
+           message.code == BadActionCode04.OFPBAC_BAD_OUT_PORT):
+
+            for action in error_packet.actions:
+                try:
+                    iface = switch.get_interface_by_port_no(action.port.value)
+                except AttributeError:
+                    iface = switch.get_interface_by_port_no(action.port)
+
+                # Check interface to drop packets forwarded to it
+                if iface:
+                    if connection.protocol.version == 0x01:
+                        iface.config = PortConfig01.OFPPC_NO_FWD
+                    elif connection.protocol.version == 0x04:
+                        iface.config = PortConfig04.OFPPC_NO_FWD
+
+        xid = message.header.xid.value
+        error_type = message.error_type
+        error_code = message.code
         try:
             flow = self._flow_mods_sent[xid]
         except KeyError:
