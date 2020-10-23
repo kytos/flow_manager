@@ -8,9 +8,11 @@ file.
 ********************************
 Added
 =====
+- Added persistence to ``Flows``.
 
 Changed
 =======
+- Change setup.py to alert when Travis fails.
 
 Deprecated
 ==========
