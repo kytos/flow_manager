@@ -121,15 +121,15 @@ class Main(KytosNApp):
                 else:
                     raise InvalidCommandError
                 self._send_flow_mod(flow.switch, flow_mod)
-                self._add_flow_mod_sent(flow_mod.header.xid, flow)
+                self._add_flow_mod_sent(flow_mod.header.xid, flow, command)
 
                 self._send_napp_event(switch, flow, command)
 
-    def _add_flow_mod_sent(self, xid, flow):
+    def _add_flow_mod_sent(self, xid, flow, command):
         """Add the flow mod to the list of flow mods sent."""
         if len(self._flow_mods_sent) >= self._flow_mods_sent_max_size:
             self._flow_mods_sent.popitem(last=False)
-        self._flow_mods_sent[xid] = flow
+        self._flow_mods_sent[xid] = (flow, command)
 
     def _send_flow_mod(self, switch, flow_mod):
         event_name = 'kytos/flow_manager.messages.out.ofpt_flow_mod'
@@ -167,9 +167,10 @@ class Main(KytosNApp):
         error_type = event.content["message"].error_type
         error_code = event.content["message"].code
         try:
-            flow = self._flow_mods_sent[xid]
+            flow, error_command = self._flow_mods_sent[xid]
         except KeyError:
             pass
         else:
             self._send_napp_event(flow.switch, flow, 'error',
+                                  error_command=error_command,
                                   error_type=error_type, error_code=error_code)

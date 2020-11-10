@@ -131,7 +131,8 @@ class TestMain(TestCase):
         self.napp._install_flows('add', flows_dict, switches)
 
         mock_send_flow_mod.assert_called_with(flow.switch, flow_mod)
-        mock_add_flow_mod_sent.assert_called_with(flow_mod.header.xid, flow)
+        mock_add_flow_mod_sent.assert_called_with(flow_mod.header.xid,
+                                                  flow, 'add')
         mock_send_napp_event.assert_called_with(self.switch_01, flow, 'add')
 
     def test_add_flow_mod_sent(self):
@@ -139,9 +140,9 @@ class TestMain(TestCase):
         xid = 0
         flow = MagicMock()
 
-        self.napp._add_flow_mod_sent(xid, flow)
+        self.napp._add_flow_mod_sent(xid, flow, 'add')
 
-        self.assertEqual(self.napp._flow_mods_sent[xid], flow)
+        self.assertEqual(self.napp._flow_mods_sent[xid], (flow, 'add'))
 
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     def test_send_flow_mod(self, mock_buffers_put):
@@ -168,7 +169,7 @@ class TestMain(TestCase):
     def test_handle_errors(self, mock_send_napp_event):
         """Test handle_errors method."""
         flow = MagicMock()
-        self.napp._flow_mods_sent[0] = flow
+        self.napp._flow_mods_sent[0] = (flow, 'add')
 
         message = MagicMock()
         message.header.xid.value = 0
@@ -179,4 +180,5 @@ class TestMain(TestCase):
         self.napp.handle_errors(event)
 
         mock_send_napp_event.assert_called_with(flow.switch, flow, 'error',
+                                                error_command='add',
                                                 error_code=5, error_type=2)
