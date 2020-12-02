@@ -99,10 +99,13 @@ class TestMain(TestCase):
 
             self.assertEqual(response_1.status_code, 404)
             self.assertEqual(response_2.status_code, 200)
-            self.assertEqual(response_3.status_code, 404)
+            if method == 'flows':
+                self.assertEqual(response_3.status_code, 404)
+            else:
+                self.assertEqual(response_3.status_code, 200)
             self.assertEqual(response_4.status_code, 404)
 
-        self.assertEqual(mock_install_flows.call_count, 2)
+        self.assertEqual(mock_install_flows.call_count, 3)
 
     def test_get_all_switches_enabled(self):
         """Test _get_all_switches_enabled method."""
