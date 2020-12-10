@@ -14,8 +14,9 @@ class TestMain(TestCase):
 
     def setUp(self):
         patch('kytos.core.helpers.run_on_thread', lambda x: x).start()
-        # pylint: disable=bad-option-value
+        # pylint: disable=import-outside-toplevel
         from napps.kytos.flow_manager.main import Main
+
         self.addCleanup(patch.stopall)
 
         controller = get_controller_mock()
@@ -110,6 +111,7 @@ class TestMain(TestCase):
 
         self.assertEqual(switches, [self.switch_01])
 
+    @patch('napps.kytos.flow_manager.main.Main._store_changed_flows')
     @patch('napps.kytos.flow_manager.main.Main._send_napp_event')
     @patch('napps.kytos.flow_manager.main.Main._add_flow_mod_sent')
     @patch('napps.kytos.flow_manager.main.Main._send_flow_mod')
@@ -117,7 +119,7 @@ class TestMain(TestCase):
     def test_install_flows(self, *args):
         """Test _install_flows method."""
         (mock_flow_factory, mock_send_flow_mod, mock_add_flow_mod_sent,
-         mock_send_napp_event) = args
+         mock_send_napp_event, _) = args
         serializer = MagicMock()
         flow = MagicMock()
         flow_mod = MagicMock()
@@ -182,3 +184,60 @@ class TestMain(TestCase):
         mock_send_napp_event.assert_called_with(flow.switch, flow, 'error',
                                                 error_command='add',
                                                 error_code=5, error_type=2)
+
+    @patch("napps.kytos.flow_manager.main.StoreHouse.get_data")
+    def test_load_flows(self, mock_storehouse):
+        """Test load flows."""
+        self.napp._load_flows()
+        mock_storehouse.assert_called()
+
+    @patch("napps.kytos.flow_manager.main.Main._install_flows")
+    def test_resend_stored_flows(self, mock_install_flows):
+        """Test resend stored flows."""
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid, 0x04)
+        mock_event = MagicMock()
+        flow = {"command": "add", "flow": MagicMock()}
+
+        flows = {"flow_list": [flow]}
+        mock_event.content = {"switch": dpid}
+        self.napp.controller.switches = {dpid: switch}
+        self.napp.stored_flows = {dpid: flows}
+        self.napp.resend_stored_flows(mock_event)
+        mock_install_flows.assert_called()
+
+    @patch("napps.kytos.of_core.flow.FlowFactory.get_class")
+    @patch("napps.kytos.flow_manager.main.StoreHouse.save_flow")
+    def test_store_changed_flows(self, mock_save_flow, _):
+        """Test store changed flows."""
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid, 0x04)
+        switch.id = dpid
+        flow = {
+            "priority": 17,
+            "cookie": 84114964,
+            "command": "add",
+            "match": {"dl_dst": "00:15:af:d5:38:98"},
+        }
+        match_fields = {
+            "priority": 17,
+            "cookie": 84114964,
+            "command": "add",
+            "dl_dst": "00:15:af:d5:38:98",
+        }
+        flows = {"flow": flow}
+
+        command = "add"
+        flow_list = {
+            "flow_list": [
+                {"match_fields": match_fields, "command": "delete",
+                 "flow": flow}
+            ]
+        }
+        self.napp.stored_flows = {dpid: flow_list}
+        self.napp._store_changed_flows(command, flows, switch)
+        mock_save_flow.assert_called()
+
+        self.napp.stored_flows = {}
+        self.napp._store_changed_flows(command, flows, switch)
+        mock_save_flow.assert_called()
