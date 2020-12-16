@@ -244,3 +244,83 @@ class TestMain(TestCase):
         self.napp.stored_flows = {}
         self.napp._store_changed_flows(command, flows, switch)
         mock_save_flow.assert_called()
+
+    @patch('napps.kytos.flow_manager.main.Main._install_flows')
+    @patch('napps.kytos.flow_manager.main.FlowFactory.get_class')
+    def test_check_switch_consistency_add(self, *args):
+        """Test check_switch_consistency method.
+
+        This test checks the case when a flow is missing in switch and have the
+        ADD command.
+        """
+        (mock_flow_factory, mock_install_flows) = args
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid, 0x04)
+        switch.flows = []
+
+        flow_1 = MagicMock()
+        flow_1.as_dict.return_value = {'flow_1': 'data'}
+
+        flow_list = [{"command": "add",
+                      "flow": {'flow_1': 'data'}
+                      }]
+        serializer = MagicMock()
+
+        mock_flow_factory.return_value = serializer
+        self.napp.stored_flows = {dpid: {"flow_list": flow_list}}
+        self.napp.check_switch_consistency(switch)
+        mock_install_flows.assert_called()
+
+    @patch('napps.kytos.flow_manager.main.Main._install_flows')
+    @patch('napps.kytos.flow_manager.main.FlowFactory.get_class')
+    def test_check_switch_consistency_delete(self, *args):
+        """Test check_switch_consistency method.
+
+        This test checks the case when a flow is missing in switch and have the
+        DELETE command.
+        """
+        (mock_flow_factory, mock_install_flows) = args
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid, 0x04)
+
+        flow_1 = MagicMock()
+        flow_1.as_dict.return_value = {'flow_1': 'data'}
+
+        flow_list = [{"command": "delete",
+                      "flow": {'flow_1': 'data'}
+                      }]
+        serializer = MagicMock()
+        serializer.from_dict.return_value = flow_1
+
+        switch.flows = [flow_1]
+
+        mock_flow_factory.return_value = serializer
+        self.napp.stored_flows = {dpid: {"flow_list": flow_list}}
+        self.napp.check_switch_consistency(switch)
+        mock_install_flows.assert_called()
+
+    @patch('napps.kytos.flow_manager.main.Main._install_flows')
+    @patch('napps.kytos.flow_manager.main.FlowFactory.get_class')
+    def test_check_storehouse_consistency(self, *args):
+        """Test check_storehouse_consistency method.
+
+        This test checks the case when a flow is missing in storehouse.
+        """
+        (mock_flow_factory, mock_install_flows) = args
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid, 0x04)
+
+        flow_1 = MagicMock()
+        flow_1.as_dict.return_value = {'flow_1': 'data'}
+
+        switch.flows = [flow_1]
+
+        flow_list = [{"command": "add",
+                      "flow": {'flow_2': 'data'}
+                      }]
+        serializer = MagicMock()
+
+        mock_flow_factory.return_value = serializer
+        self.napp.stored_flows = {dpid: {"flow_list": flow_list}}
+        self.napp.check_storehouse_consistency(switch)
+        mock_install_flows.assert_called()
