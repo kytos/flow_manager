@@ -21,6 +21,23 @@ Removed
 Security
 ========
 
+[2.4] - 2020-12-23
+******************
+Added
+=====
+
+- Added persistence mechanism to store in storehouse flows installed by
+   ``kytos/flow_manager``.
+- Added mechanism to resend stored flows in Kytos bootstrap.
+- Include the original command in the list of sent flow mods.
+- Added new consistency check to guarantee the consistency of installed flows
+   between switches and the controller.
+
+Changed
+=======
+- Changed setup.py to alert when a test fails on Travis.
+- Updated flow installation to allow removing of flows from disabled switches.
+
 [2.3] - 2020-07-07
 ******************
 Added
