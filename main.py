@@ -47,11 +47,11 @@ class Main(KytosNApp):
         """Shutdown routine of the NApp."""
         log.debug("flow-manager stopping")
 
-    @listen_to('kytos/topology.port.created')
+    @listen_to('kytos/of_core.handshake.completed')
     def resend_stored_flows(self, event):
         """Resend stored Flows."""
-        dpid = str(event.content['switch'])
-        switch = self.controller.get_switch_by_dpid(dpid)
+        switch = event.content['switch']
+        dpid = str(switch.dpid)
         # This can be a problem because this code is running a thread
         if dpid in self.resent_flows:
             log.info(f'Flow already resended to Switch {dpid}')

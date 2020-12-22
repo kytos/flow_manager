@@ -200,7 +200,7 @@ class TestMain(TestCase):
         flow = {"command": "add", "flow": MagicMock()}
 
         flows = {"flow_list": [flow]}
-        mock_event.content = {"switch": dpid}
+        mock_event.content = {"switch": switch}
         self.napp.controller.switches = {dpid: switch}
         self.napp.stored_flows = {dpid: flows}
         self.napp.resend_stored_flows(mock_event)
