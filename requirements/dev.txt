@@ -6,7 +6,7 @@
 #
 -e git+git://github.com/kytos/kytos.git#egg=kytos
 -e git+git://github.com/kytos/python-openflow.git#egg=python-openflow
--e git+git://github.com/kytos/of_core.git#egg=of_core
+-e git+git://github.com/kytos/of_core.git#egg=kytos-of-core
 -e .
 astroid==2.2.5            # via pylint
 click==7.0                # via flask, pip-tools

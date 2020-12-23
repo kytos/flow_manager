@@ -92,7 +92,10 @@ class Main(KytosNApp):
             if not switch:
                 return jsonify({"response": 'dpid not found.'}), 404
             elif switch.is_enabled() is False:
-                return jsonify({"response": 'switch is disabled.'}), 404
+                if command == "delete":
+                    self._install_flows(command, flows_dict, [switch])
+                else:
+                    return jsonify({"response": 'switch is disabled.'}), 404
             else:
                 self._install_flows(command, flows_dict, [switch])
         else:
