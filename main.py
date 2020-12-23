@@ -99,13 +99,13 @@ class Main(KytosNApp):
 
             if stored_flow_obj not in switch.flows:
                 if command == 'add':
-                    log.info('A problem with consistency were dectected in '
+                    log.info('A consistency problem was detected in '
                              f'switch {dpid}.')
                     self._install_flows(command, flow, [switch])
                     log.info(f'Flow forwarded to switch {dpid} to be '
                              'installed.')
             elif command == 'delete':
-                log.info('A problem with consistency were dectected in '
+                log.info('A consistency problem was detected in '
                          f'switch {dpid}.')
                 self._install_flows(command, flow, [switch])
                 log.info(f'Flow forwarded to switch {dpid} to be deleted.')
@@ -116,7 +116,7 @@ class Main(KytosNApp):
 
         for installed_flow in switch.flows:
             if dpid not in self.stored_flows:
-                log.info('A problem with consistency were dectected in '
+                log.info('A consistency problem was detected in '
                          f'switch {dpid}.')
                 flow = {'flows': [installed_flow.as_dict()]}
                 command = 'delete'
@@ -130,7 +130,7 @@ class Main(KytosNApp):
                                      for stored_flow in stored_flows]
 
                 if installed_flow not in stored_flows_list:
-                    log.info('A problem with consistency were dectected in '
+                    log.info('A consistency problem was detected in '
                              f'switch {dpid}.')
                     flow = {'flows': [installed_flow.as_dict()]}
                     command = 'delete'
