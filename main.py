@@ -9,7 +9,7 @@ from napps.kytos.flow_manager.storehouse import StoreHouse
 from napps.kytos.of_core.flow import FlowFactory
 
 from .exceptions import InvalidCommandError
-from .settings import FLOWS_DICT_MAX_SIZE
+from .settings import CONSISTENCY_INTERVAL, FLOWS_DICT_MAX_SIZE
 
 
 class Main(KytosNApp):
@@ -34,6 +34,8 @@ class Main(KytosNApp):
         #                                      'flow': {flow_dict}}]}}}
         self.stored_flows = {}
         self.resent_flows = set()
+        if CONSISTENCY_INTERVAL > 0:
+            self.execute_as_loop(CONSISTENCY_INTERVAL)
 
     def execute(self):
         """Run once on NApp 'start' or in a loop.
@@ -42,6 +44,9 @@ class Main(KytosNApp):
         Users shouldn't call this method directly.
         """
         self._load_flows()
+
+        if CONSISTENCY_INTERVAL > 0:
+            self.consistency_check()
 
     def shutdown(self):
         """Shutdown routine of the NApp."""
@@ -64,6 +69,73 @@ class Main(KytosNApp):
                 self._install_flows(command, flows_dict, [switch])
             self.resent_flows.add(dpid)
             log.info(f'Flows resent to Switch {dpid}')
+
+    def consistency_check(self):
+        """Check the consistency of flows in each switch."""
+        switches = self.controller.switches.values()
+
+        for switch in switches:
+            # Check if a dpid is a key in 'stored_flows' dictionary
+            if switch.is_enabled():
+                self.check_storehouse_consistency(switch)
+
+                if switch.dpid in self.stored_flows:
+                    self.check_switch_consistency(switch)
+
+    def check_switch_consistency(self, switch):
+        """Check consistency of installed flows for a specific switch."""
+        dpid = switch.dpid
+
+        # Flows stored in storehouse
+        stored_flows = self.stored_flows[dpid]['flow_list']
+
+        serializer = FlowFactory.get_class(switch)
+
+        for stored_flow in stored_flows:
+            command = stored_flow['command']
+            stored_flow_obj = serializer.from_dict(stored_flow['flow'], switch)
+
+            flow = {'flows': [stored_flow['flow']]}
+
+            if stored_flow_obj not in switch.flows:
+                if command == 'add':
+                    log.info('A consistency problem was detected in '
+                             f'switch {dpid}.')
+                    self._install_flows(command, flow, [switch])
+                    log.info(f'Flow forwarded to switch {dpid} to be '
+                             'installed.')
+            elif command == 'delete':
+                log.info('A consistency problem was detected in '
+                         f'switch {dpid}.')
+                self._install_flows(command, flow, [switch])
+                log.info(f'Flow forwarded to switch {dpid} to be deleted.')
+
+    def check_storehouse_consistency(self, switch):
+        """Check consistency of installed flows for a specific switch."""
+        dpid = switch.dpid
+
+        for installed_flow in switch.flows:
+            if dpid not in self.stored_flows:
+                log.info('A consistency problem was detected in '
+                         f'switch {dpid}.')
+                flow = {'flows': [installed_flow.as_dict()]}
+                command = 'delete'
+                self._install_flows(command, flow, [switch])
+                log.info(f'Flow forwarded to switch {dpid} to be deleted.')
+            else:
+                serializer = FlowFactory.get_class(switch)
+                stored_flows = self.stored_flows[dpid]['flow_list']
+                stored_flows_list = [serializer.from_dict(stored_flow['flow'],
+                                                          switch)
+                                     for stored_flow in stored_flows]
+
+                if installed_flow not in stored_flows_list:
+                    log.info('A consistency problem was detected in '
+                             f'switch {dpid}.')
+                    flow = {'flows': [installed_flow.as_dict()]}
+                    command = 'delete'
+                    self._install_flows(command, flow, [switch])
+                    log.info(f'Flow forwarded to switch {dpid} to be deleted.')
 
     # pylint: disable=attribute-defined-outside-init
     def _load_flows(self):
@@ -93,7 +165,6 @@ class Main(KytosNApp):
             log.info('The Flow cannot be stored, the destination switch '
                      f'have not been specified: {switch}')
             return
-
         installed_flow = {}
         flow_list = []
         installed_flow['command'] = command
