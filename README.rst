@@ -78,6 +78,7 @@ Requirements
 ############
 
 - kytos/of_core
+- kytos/storehouse
 
 ######
 Events
