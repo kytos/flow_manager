@@ -121,6 +121,23 @@ Content
      'flow': <Object representing the removed flow>
    }
 
+##########################
+Flow consistency mechanism
+##########################
+
+This Napp is also responsible for the consistency of the installed flows
+through flow_manager. To do this, all the flows sent to the switches are
+stored in the storehouse NApp, and routine check every X seconds if the
+flows installed in the switches are consistent with the stored data.
+
+By default, the consistency mechanism is enabled, running every 60 seconds.
+This resource can be disabled in the ``settings.py`` file, changing the time of
+the check to 0.
+
+Configuration fields (in ``settings.py``)
+
+- CONSISTENCY_INTERVAL # Time in seconds to run consistency check.
+
 ########
 Rest API
 ########
