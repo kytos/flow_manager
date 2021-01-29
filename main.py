@@ -61,7 +61,7 @@ class Main(KytosNApp):
         dpid = str(switch.dpid)
         # This can be a problem because this code is running a thread
         if dpid in self.resent_flows:
-            log.info(f'Flow already resended to Switch {dpid}')
+            log.debug(f'Flow already resent to the switch {dpid}')
             return
         if dpid in self.stored_flows:
             flow_list = self.stored_flows[dpid]['flow_list']
