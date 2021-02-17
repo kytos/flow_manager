@@ -14,7 +14,10 @@ from napps.kytos.flow_manager.storehouse import StoreHouse
 from napps.kytos.of_core.flow import FlowFactory
 
 from .exceptions import InvalidCommandError
-from .settings import CONSISTENCY_INTERVAL, FLOWS_DICT_MAX_SIZE
+from .settings import (CONSISTENCY_COOKIE_EXCEPTION_RANGE,
+                       CONSISTENCY_INTERVAL,
+                       CONSISTENCY_TABLE_ID_EXCEPTION_RANGE,
+                       FLOWS_DICT_MAX_SIZE)
 
 
 def cast_fields(flow_dict):
@@ -39,6 +42,8 @@ class Main(KytosNApp):
         log.debug("flow-manager starting")
         self._flow_mods_sent = OrderedDict()
         self._flow_mods_sent_max_size = FLOWS_DICT_MAX_SIZE
+        self.cookie_exception_range = CONSISTENCY_COOKIE_EXCEPTION_RANGE
+        self.table_id_exception_range = CONSISTENCY_TABLE_ID_EXCEPTION_RANGE
 
         # Storehouse client to save and restore flow data:
         self.storehouse = StoreHouse(self.controller)
@@ -88,6 +93,26 @@ class Main(KytosNApp):
             self.resent_flows.add(dpid)
             log.info(f'Flows resent to Switch {dpid}')
 
+    def is_ignored(self, flow):
+        """Verify if the flow is in the exception range.
+
+        Check by `cookie` range and `table_id` range.
+        """
+        # Check by cookie
+        if len(self.cookie_exception_range) == 2:
+            begin_cookie = self.cookie_exception_range[0]
+            end_cookie = self.cookie_exception_range[1]
+            if flow.cookie >= begin_cookie and flow.cookie <= end_cookie:
+                return True
+
+        # Check by `table_id`
+        if len(self.table_id_exception_range) == 2:
+            begin_tab_id = self.table_id_exception_range[0]
+            end_tab_id = self.table_id_exception_range[1]
+            if flow.table_id >= begin_tab_id and flow.table_id <= end_tab_id:
+                return True
+        return False
+
     def consistency_check(self):
         """Check the consistency of flows in each switch."""
         switches = self.controller.switches.values()
@@ -134,6 +159,11 @@ class Main(KytosNApp):
         dpid = switch.dpid
 
         for installed_flow in switch.flows:
+
+            # Check if the flow are in the excluded flow list
+            if self.is_ignored(installed_flow):
+                continue
+
             if dpid not in self.stored_flows:
                 log.info('A consistency problem was detected in '
                          f'switch {dpid}.')
