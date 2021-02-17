@@ -147,8 +147,7 @@ class Main(KytosNApp):
             if 'id' in data:
                 del data['id']
             self.stored_flows = data
-
-        except KeyError as error:
+        except (KeyError, FileNotFoundError) as error:
             log.debug(f'There are no flows to load: {error}')
         else:
             log.info('Flows loaded.')
