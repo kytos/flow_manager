@@ -5,7 +5,8 @@ from kytos.core import log
 from kytos.core.events import KytosEvent
 from napps.kytos.flow_manager import settings
 
-DEFAULT_WAIT_PERSISTENCE_BOX_TIMER = 0.1
+DEFAULT_BOX_RESTORE_TIMER = 0.1
+BOX_RESTORE_ATTEMPTS = 10
 
 
 class StoreHouse:
@@ -25,9 +26,8 @@ class StoreHouse:
         """Create a storehouse client instance."""
         self.controller = controller
         self.namespace = 'kytos.flow.persistence'
-        self.wait_persistence_box = getattr(settings,
-                                            'WAIT_PERSISTENCE_BOX_TIMER',
-                                            DEFAULT_WAIT_PERSISTENCE_BOX_TIMER)
+        self.box_restore_timer = getattr(settings, 'BOX_RESTORE_TIMER',
+                                         DEFAULT_BOX_RESTORE_TIMER)
 
         if 'box' not in self.__dict__:
             self.box = None
@@ -36,8 +36,14 @@ class StoreHouse:
     def get_data(self):
         """Return the persistence box data."""
         # Wait retrieve or create box in storehouse
-        while not self.box:
-            time.sleep(self.wait_persistence_box)
+        i = 0
+        while not self.box and i < BOX_RESTORE_ATTEMPTS:
+            time.sleep(self.box_restore_timer)
+            i += 1
+        if not self.box:
+            error = 'Error retrieving persistence box from storehouse.'
+            log.error(error)
+            raise FileNotFoundError(error)
         return self.box.data
 
     def create_box(self):
