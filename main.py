@@ -29,6 +29,40 @@ def cast_fields(flow_dict):
     flow_dict['match'] = match
     return flow_dict
 
+def _is_valid_range(values, instance):
+    """Check if the exception range is valid."""
+    if len(values) != 2:
+        msg = f'The Tuple must have size of 2, Size: {len(values)}'
+        raise ValueError(msg)
+    first, second = values
+    if second < first:
+        msg = f'The range is not well formatted: {values}'
+        raise ValueError(msg)
+    if not isinstance(first, instance) or not isinstance(second, instance):
+        msg = 'The elements of the range must be of the class {instance}'
+        raise TypeError(msg)
+
+
+def validate_input(exceptions):
+    """Check that the list of exceptions is well formatted.
+
+    Returns True if the consistency exception input are well formatted.
+    """
+    msg = 'Consistency exception is not well formatted: %s'
+    for exception in exceptions:
+        if isinstance(exception, tuple):
+            try:
+                _is_valid_range(exception, int)
+            except (TypeError, ValueError) as error:
+                log.warn(msg, error)
+                return False
+        elif not isinstance(exception, int):
+            error_msg = ('The elements must be of class int or tuple'
+                         f' but they are: {type(exception)}')
+            log.warn(msg, error_msg)
+            return False
+    return True
+
 
 class Main(KytosNApp):
     """Main class to be used by Kytos controller."""
@@ -42,8 +76,10 @@ class Main(KytosNApp):
         log.debug("flow-manager starting")
         self._flow_mods_sent = OrderedDict()
         self._flow_mods_sent_max_size = FLOWS_DICT_MAX_SIZE
-        self.cookie_exception_range = CONSISTENCY_COOKIE_EXCEPTION_RANGE
-        self.table_id_exception_range = CONSISTENCY_TABLE_ID_EXCEPTION_RANGE
+        if validate_input(CONSISTENCY_COOKIE_EXCEPTION_RANGE):
+            self.cookie_exception_range = CONSISTENCY_COOKIE_EXCEPTION_RANGE
+        if validate_input(CONSISTENCY_TABLE_ID_EXCEPTION_RANGE):
+            self.tab_id_exception_range = CONSISTENCY_TABLE_ID_EXCEPTION_RANGE
 
         # Storehouse client to save and restore flow data:
         self.storehouse = StoreHouse(self.controller)
@@ -93,24 +129,35 @@ class Main(KytosNApp):
             self.resent_flows.add(dpid)
             log.info(f'Flows resent to Switch {dpid}')
 
-    def is_ignored(self, flow):
+    @staticmethod
+    def in_range(field, exceptions):
+        """Check if the field are in the list of exceptions.
+
+        Returns True if the field is in the list of exceptions.
+        """
+        for i in exceptions:
+            if isinstance(i, tuple):
+                begin_interval, end_interval = i
+                if begin_interval <= field <= end_interval:
+                    return True
+            if isinstance(i, int):
+                if field == i:
+                    return True
+        return False
+
+    def consistency_exception_check(self, flow):
         """Verify if the flow is in the exception range.
 
         Check by `cookie` range and `table_id` range.
+        Returns True if the flow is in the exception list.
         """
         # Check by cookie
-        if len(self.cookie_exception_range) == 2:
-            begin_cookie = self.cookie_exception_range[0]
-            end_cookie = self.cookie_exception_range[1]
-            if flow.cookie >= begin_cookie and flow.cookie <= end_cookie:
-                return True
+        if self.in_range(flow.cookie, self.cookie_exception_range):
+            return True
 
         # Check by `table_id`
-        if len(self.table_id_exception_range) == 2:
-            begin_tab_id = self.table_id_exception_range[0]
-            end_tab_id = self.table_id_exception_range[1]
-            if flow.table_id >= begin_tab_id and flow.table_id <= end_tab_id:
-                return True
+        if self.in_range(flow.table_id, self.tab_id_exception_range):
+            return True
         return False
 
     def consistency_check(self):
@@ -161,7 +208,7 @@ class Main(KytosNApp):
         for installed_flow in switch.flows:
 
             # Check if the flow are in the excluded flow list
-            if self.is_ignored(installed_flow):
+            if self.consistency_exception_check(installed_flow):
                 continue
 
             if dpid not in self.stored_flows:

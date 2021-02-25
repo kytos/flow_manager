@@ -7,6 +7,7 @@ BOX_RESTORE_TIMER = 0.1
 CONSISTENCY_INTERVAL = 60
 
 # List of exceptions in the consistency mechanism
-# [begin, end]
+# To filter by a cookie or `table_id` use [value]
+# To filter by a cookie or `table_id` range [(value1, value2)]
 CONSISTENCY_COOKIE_EXCEPTION_RANGE = []
 CONSISTENCY_TABLE_ID_EXCEPTION_RANGE = []
