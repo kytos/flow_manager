@@ -36,7 +36,7 @@ def _is_valid_range(values, instance):
         raise ValueError(msg)
     first, second = values
     if second < first:
-        msg = f'The range is not well formatted: {values}'
+        msg = (f'The first value is bigger than the second: {values}')
         raise ValueError(msg)
     if not isinstance(first, instance) or not isinstance(second, instance):
         msg = 'The elements of the range must be of the class {instance}'
@@ -48,7 +48,8 @@ def validate_input(exceptions):
 
     Returns True if the consistency exception input are well formatted.
     """
-    msg = 'Consistency exception is not well formatted: %s'
+    msg = ('The list of consistency exception is not well formatted'
+           ', it will be ignored: %s')
     for exception in exceptions:
         if isinstance(exception, tuple):
             try:
@@ -76,6 +77,8 @@ class Main(KytosNApp):
         log.debug("flow-manager starting")
         self._flow_mods_sent = OrderedDict()
         self._flow_mods_sent_max_size = FLOWS_DICT_MAX_SIZE
+        self.cookie_exception_range = []
+        self.tab_id_exception_range = []
         if validate_input(CONSISTENCY_COOKIE_EXCEPTION_RANGE):
             self.cookie_exception_range = CONSISTENCY_COOKIE_EXCEPTION_RANGE
         if validate_input(CONSISTENCY_TABLE_ID_EXCEPTION_RANGE):
@@ -130,7 +133,7 @@ class Main(KytosNApp):
             log.info(f'Flows resent to Switch {dpid}')
 
     @staticmethod
-    def in_range(field, exceptions):
+    def is_exception(field, exceptions):
         """Check if the field are in the list of exceptions.
 
         Returns True if the field is in the list of exceptions.
@@ -152,11 +155,11 @@ class Main(KytosNApp):
         Returns True if the flow is in the exception list.
         """
         # Check by cookie
-        if self.in_range(flow.cookie, self.cookie_exception_range):
+        if self.is_exception(flow.cookie, self.cookie_exception_range):
             return True
 
         # Check by `table_id`
-        if self.in_range(flow.table_id, self.tab_id_exception_range):
+        if self.is_exception(flow.table_id, self.tab_id_exception_range):
             return True
         return False
 
