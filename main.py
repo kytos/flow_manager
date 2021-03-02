@@ -14,10 +14,8 @@ from napps.kytos.flow_manager.storehouse import StoreHouse
 from napps.kytos.of_core.flow import FlowFactory
 
 from .exceptions import InvalidCommandError
-from .settings import (CONSISTENCY_COOKIE_EXCEPTION_RANGE,
-                       CONSISTENCY_INTERVAL,
-                       CONSISTENCY_TABLE_ID_EXCEPTION_RANGE,
-                       FLOWS_DICT_MAX_SIZE)
+from .settings import (CONSISTENCY_COOKIE_IGNORED_RANGE, CONSISTENCY_INTERVAL,
+                       CONSISTENCY_TABLE_ID_IGNORED_RANGE, FLOWS_DICT_MAX_SIZE)
 
 
 def cast_fields(flow_dict):
@@ -29,10 +27,12 @@ def cast_fields(flow_dict):
     flow_dict['match'] = match
     return flow_dict
 
-def _is_valid_range(values, instance):
-    """Check if the exception range is valid."""
+
+def _validate_range(values):
+    """Check that the range of flows ignored by the consistency is valid."""
+    instance = int
     if len(values) != 2:
-        msg = f'The Tuple must have size of 2, Size: {len(values)}'
+        msg = f'The tuple must have 2 items, not {len(values)}'
         raise ValueError(msg)
     first, second = values
     if second < first:
@@ -43,23 +43,25 @@ def _is_valid_range(values, instance):
         raise TypeError(msg)
 
 
-def validate_input(exceptions):
-    """Check that the list of exceptions is well formatted.
+def _valid_consistency_ignored(consistency_ignored_list):
+    """Check the format of the list of ignored consistency flows.
 
-    Returns True if the consistency exception input are well formatted.
+    Check that the list of ignored flows in the consistency check
+    is well formatted. Returns True, if the list is well
+    formatted, otherwise return False.
     """
-    msg = ('The list of consistency exception is not well formatted'
-           ', it will be ignored: %s')
-    for exception in exceptions:
-        if isinstance(exception, tuple):
+    msg = ('The list of ignored flows in the consistency check'
+           'is not well formatted, it will be ignored: %s')
+    for consistency_ignored in consistency_ignored_list:
+        if isinstance(consistency_ignored, tuple):
             try:
-                _is_valid_range(exception, int)
+                _validate_range(consistency_ignored)
             except (TypeError, ValueError) as error:
                 log.warn(msg, error)
                 return False
-        elif not isinstance(exception, int):
+        elif not isinstance(consistency_ignored, (int, tuple)):
             error_msg = ('The elements must be of class int or tuple'
-                         f' but they are: {type(exception)}')
+                         f' but they are: {type(consistency_ignored)}')
             log.warn(msg, error_msg)
             return False
     return True
@@ -77,12 +79,12 @@ class Main(KytosNApp):
         log.debug("flow-manager starting")
         self._flow_mods_sent = OrderedDict()
         self._flow_mods_sent_max_size = FLOWS_DICT_MAX_SIZE
-        self.cookie_exception_range = []
-        self.tab_id_exception_range = []
-        if validate_input(CONSISTENCY_COOKIE_EXCEPTION_RANGE):
-            self.cookie_exception_range = CONSISTENCY_COOKIE_EXCEPTION_RANGE
-        if validate_input(CONSISTENCY_TABLE_ID_EXCEPTION_RANGE):
-            self.tab_id_exception_range = CONSISTENCY_TABLE_ID_EXCEPTION_RANGE
+        self.cookie_ignored_range = []
+        self.tab_id_ignored_range = []
+        if _valid_consistency_ignored(CONSISTENCY_COOKIE_IGNORED_RANGE):
+            self.cookie_ignored_range = CONSISTENCY_COOKIE_IGNORED_RANGE
+        if _valid_consistency_ignored(CONSISTENCY_TABLE_ID_IGNORED_RANGE):
+            self.tab_id_ignored_range = CONSISTENCY_TABLE_ID_IGNORED_RANGE
 
         # Storehouse client to save and restore flow data:
         self.storehouse = StoreHouse(self.controller)
@@ -133,33 +135,35 @@ class Main(KytosNApp):
             log.info(f'Flows resent to Switch {dpid}')
 
     @staticmethod
-    def is_exception(field, exceptions):
-        """Check if the field are in the list of exceptions.
+    def is_ignored(field, ignored_range):
+        """Check that the flow field is in the range of ignored flows.
 
-        Returns True if the field is in the list of exceptions.
+        Returns True, if the field is in the range of ignored flows,
+        otherwise it returns False.
         """
-        for i in exceptions:
+        for i in ignored_range:
             if isinstance(i, tuple):
-                begin_interval, end_interval = i
-                if begin_interval <= field <= end_interval:
+                start_range, end_range = i
+                if start_range <= field <= end_range:
                     return True
             if isinstance(i, int):
                 if field == i:
                     return True
         return False
 
-    def consistency_exception_check(self, flow):
-        """Verify if the flow is in the exception range.
+    def consistency_ignored_check(self, flow):
+        """Check if the flow is in the list of flows ignored by consistency.
 
         Check by `cookie` range and `table_id` range.
-        Returns True if the flow is in the exception list.
+        Return True if the flow is in the ignored range, otherwise return
+        False.
         """
         # Check by cookie
-        if self.is_exception(flow.cookie, self.cookie_exception_range):
+        if self.is_ignored(flow.cookie, self.cookie_ignored_range):
             return True
 
         # Check by `table_id`
-        if self.is_exception(flow.table_id, self.tab_id_exception_range):
+        if self.is_ignored(flow.table_id, self.tab_id_ignored_range):
             return True
         return False
 
@@ -210,8 +214,8 @@ class Main(KytosNApp):
 
         for installed_flow in switch.flows:
 
-            # Check if the flow are in the excluded flow list
-            if self.consistency_exception_check(installed_flow):
+            # Check if the flow are in the ignored flow list
+            if self.consistency_ignored_check(installed_flow):
                 continue
 
             if dpid not in self.stored_flows:

@@ -582,9 +582,9 @@ class TestMain(TestCase):
         (mock_flow_factory, mock_install_flows) = args
         dpid = "00:00:00:00:00:00:00:01"
         switch = get_switch_mock(dpid, 0x04)
-        cookie_exception_interval = [(0x2b00000000000011,
-                                      0x2b000000000000ff), 0x2b00000000000100]
-        self.napp.cookie_exception_range = cookie_exception_interval
+        cookie_ignored_interval = [(0x2b00000000000011,
+                                    0x2b000000000000ff), 0x2b00000000000100]
+        self.napp.cookie_ignored_range = cookie_ignored_interval
         flow = MagicMock()
         expected = [
                     {'cookie': 0x2b00000000000010, 'called': 1},
@@ -606,13 +606,13 @@ class TestMain(TestCase):
 
     @patch('napps.kytos.flow_manager.main.Main._install_flows')
     @patch('napps.kytos.flow_manager.main.FlowFactory.get_class')
-    def test_consistency_table_id_exception_range(self, *args):
-        """Test the consistency `table_id` exception range."""
+    def test_consistency_table_id_ignored_range(self, *args):
+        """Test the consistency `table_id` ignored range."""
         (mock_flow_factory, mock_install_flows) = args
         dpid = "00:00:00:00:00:00:00:01"
         switch = get_switch_mock(dpid, 0x04)
-        table_id_exception_interval = [(1, 2), 3]
-        self.napp.tab_id_exception_range = table_id_exception_interval
+        table_id_ignored_interval = [(1, 2), 3]
+        self.napp.tab_id_ignored_range = table_id_ignored_interval
         flow = MagicMock()
         expected = [
                     {'table_id': 0, 'called': 1},
