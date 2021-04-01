@@ -1,5 +1,6 @@
 """kytos/flow_manager NApp installs, lists and deletes switch flows."""
 from collections import OrderedDict
+from copy import deepcopy
 
 from flask import jsonify, request
 from pyof.foundation.base import UBIntBase
@@ -8,6 +9,7 @@ from pyof.v0x01.common.phy_port import PortConfig
 
 from kytos.core import KytosEvent, KytosNApp, log, rest
 from kytos.core.helpers import listen_to
+from napps.kytos.flow_manager.match import match_flows
 from napps.kytos.flow_manager.storehouse import StoreHouse
 from napps.kytos.of_core.flow import FlowFactory
 
@@ -172,7 +174,7 @@ class Main(KytosNApp):
             flow: Flows to be stored
             switch: Switch target
         """
-        stored_flows_box = self.stored_flows.copy()
+        stored_flows_box = deepcopy(self.stored_flows)
         # if the flow has a destination dpid it can be stored.
         if not switch:
             log.info('The Flow cannot be stored, the destination switch '
@@ -182,6 +184,7 @@ class Main(KytosNApp):
         flow_list = []
         installed_flow['command'] = command
         installed_flow['flow'] = flow
+        deleted_flows = []
 
         serializer = FlowFactory.get_class(switch)
         installed_flow_obj = serializer.from_dict(flow, switch)
@@ -196,7 +199,16 @@ class Main(KytosNApp):
             for stored_flow in stored_flows:
                 stored_flow_obj = serializer.from_dict(stored_flow['flow'],
                                                        switch)
-                if installed_flow_obj == stored_flow_obj:
+
+                version = switch.connection.protocol.version
+
+                if installed_flow['command'] == 'delete':
+                    # It is necessary to check whether this exclusion is
+                    # strict or not strict
+                    if match_flows(flow, version, stored_flow['flow']):
+                        deleted_flows.append(stored_flow)
+
+                elif installed_flow_obj == stored_flow_obj:
                     if stored_flow['command'] == installed_flow['command']:
                         log.debug('Data already stored.')
                         return
@@ -206,16 +218,19 @@ class Main(KytosNApp):
                     # is to remove it. In this case, the old instruction is
                     # removed and the new one is stored.
                     stored_flow['command'] = installed_flow.get('command')
-                    stored_flows.remove(stored_flow)
+                    deleted_flows.append(stored_flow)
                     break
 
+            # if installed_flow['command'] != 'delete':
             stored_flows.append(installed_flow)
+            for i in deleted_flows:
+                stored_flows.remove(i)
             stored_flows_box[switch.id]['flow_list'] = stored_flows
 
         stored_flows_box['id'] = 'flow_persistence'
         self.storehouse.save_flow(stored_flows_box)
         del stored_flows_box['id']
-        self.stored_flows = stored_flows_box.copy()
+        self.stored_flows = deepcopy(stored_flows_box)
 
     @rest('v2/flows')
     @rest('v2/flows/<dpid>')
