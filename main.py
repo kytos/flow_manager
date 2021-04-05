@@ -203,8 +203,7 @@ class Main(KytosNApp):
                 version = switch.connection.protocol.version
 
                 if installed_flow['command'] == 'delete':
-                    # It is necessary to check whether this exclusion is
-                    # strict or not strict
+                    # No strict match
                     if match_flows(flow, version, stored_flow['flow']):
                         deleted_flows.append(stored_flow)
 
