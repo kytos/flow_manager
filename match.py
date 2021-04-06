@@ -34,40 +34,8 @@ def _get_match_fields(flow_dict):
 
 
 # pylint: disable=too-many-return-statements, too-many-statements, R0912
-def match10(flow_dict, args):
-    """Match a packet against this flow (OF1.0)."""
-    match_fields = _get_match_fields(flow_dict)
-    wildcards = match_fields.get('wildcards')
-    if not wildcards & FlowWildCards.OFPFW_IN_PORT:
-        if 'in_port' not in args:
-            return False
-        if match_fields.get('in_port') != int(args.get('in_port')):
-            return False
-    if not wildcards & FlowWildCards.OFPFW_DL_VLAN_PCP:
-        if 'vlan_pcp' not in args:
-            return False
-        if match_fields.get('vlan_pcp') != int(args.get('vlan_pcp')):
-            return False
-    if not wildcards & FlowWildCards.OFPFW_DL_VLAN:
-        if 'vlan_vid' not in args:
-            return False
-        if match_fields.get('vlan_vid') != args.get('vlan_vid')[-1]:
-            return False
-    if not wildcards & FlowWildCards.OFPFW_DL_SRC:
-        if 'eth_src' not in args:
-            return False
-        if match_fields.get('eth_src') != args.get('eth_src'):
-            return False
-    if not wildcards & FlowWildCards.OFPFW_DL_DST:
-        if 'eth_dst' not in args:
-            return False
-        if match_fields.get('eth_dst') != args.get('eth_dst'):
-            return False
-    if not wildcards & FlowWildCards.OFPFW_DL_TYPE:
-        if 'eth_type' not in args:
-            return False
-        if match_fields.get('eth_type') != int(args.get('eth_type')):
-            return False
+def _match_ipv4_10(match_fields, args, wildcards):
+    """Match IPV4 fields against packet with Flow (OF1.0)."""
     if not match_fields['eth_type'] == IPV4_ETH_TYPE:
         return False
     flow_ip_int = int(ipaddress.IPv4Address(match_fields.get('ipv4_src')))
@@ -116,6 +84,46 @@ def match10(flow_dict, args):
             return False
         if match_fields.get('tcp_dst') != int(args.get('tp_dst')):
             return False
+    return True
+
+
+# pylint: disable=too-many-return-statements, too-many-statements, R0912
+def match10(flow_dict, args):
+    """Match a packet against this flow (OF1.0)."""
+    match_fields = _get_match_fields(flow_dict)
+    wildcards = match_fields.get('wildcards')
+    if not wildcards & FlowWildCards.OFPFW_IN_PORT:
+        if 'in_port' not in args:
+            return False
+        if match_fields.get('in_port') != int(args.get('in_port')):
+            return False
+    if not wildcards & FlowWildCards.OFPFW_DL_VLAN_PCP:
+        if 'vlan_pcp' not in args:
+            return False
+        if match_fields.get('vlan_pcp') != int(args.get('vlan_pcp')):
+            return False
+    if not wildcards & FlowWildCards.OFPFW_DL_VLAN:
+        if 'vlan_vid' not in args:
+            return False
+        if match_fields.get('vlan_vid') != args.get('vlan_vid')[-1]:
+            return False
+    if not wildcards & FlowWildCards.OFPFW_DL_SRC:
+        if 'eth_src' not in args:
+            return False
+        if match_fields.get('eth_src') != args.get('eth_src'):
+            return False
+    if not wildcards & FlowWildCards.OFPFW_DL_DST:
+        if 'eth_dst' not in args:
+            return False
+        if match_fields.get('eth_dst') != args.get('eth_dst'):
+            return False
+    if not wildcards & FlowWildCards.OFPFW_DL_TYPE:
+        if 'eth_type' not in args:
+            return False
+        if match_fields.get('eth_type') != int(args.get('eth_type')):
+            return False
+    if not _match_ipv4_10(match_fields, args, wildcards):
+        return False
     return flow_dict
 
 
