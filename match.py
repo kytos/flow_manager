@@ -155,10 +155,19 @@ def match13_no_strict(flow_to_install, stored_flow_dict):
         return False
 
     for key, value in flow_to_install.get('match').items():
-        if 'match' in stored_flow_dict:
+        if 'match' not in stored_flow_dict:
+            return False
+        if key not in ('ipv4_src', 'ipv4_dst', 'ipv6_src', 'ipv6_dst'):
             if value == stored_flow_dict['match'].get(key):
                 return stored_flow_dict
-    return None
+        else:
+            field = flow_to_install.get(key)
+            packet_ip = int(ipaddress.ip_address(field))
+            ip_addr = value
+            if packet_ip & ip_addr.netmask == ip_addr.address:
+                return stored_flow_dict
+
+    return False
 
 
 def match_flows(flow_to_install, version, stored_flow_dict):
