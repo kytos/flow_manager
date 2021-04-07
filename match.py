@@ -133,11 +133,12 @@ def match13_no_strict(flow_to_install, stored_flow_dict):
     Return the flow if any fields match, otherwise, return False.
     """
     if flow_to_install.get('cookie_mask') and 'cookie' in stored_flow_dict:
-        cookie = flow_to_install['cookie_mask'] & flow_to_install['cookie']
-        if cookie == stored_flow_dict['cookie']:
+        cookie = flow_to_install['cookie'] & flow_to_install['cookie_mask']
+        stored_cookie = (stored_flow_dict['cookie'] &
+                         flow_to_install['cookie_mask'])
+        if cookie == stored_cookie:
             return stored_flow_dict
         return False
-
     if 'match' not in flow_to_install:
         return False
 
@@ -148,12 +149,14 @@ def match13_no_strict(flow_to_install, stored_flow_dict):
             if value == stored_flow_dict['match'].get(key):
                 return stored_flow_dict
         else:
-            field = flow_to_install.get(key)
-            packet_ip = int(ipaddress.ip_address(field))
-            ip_addr = value
-            if packet_ip & ip_addr.netmask == ip_addr.address:
+            field = stored_flow_dict['match'].get(key)
+            if not field:
+                return False
+            masked_ip_addr = ipaddress.ip_network(value, False)
+            field_mask = field + "/" + str(masked_ip_addr.netmask)
+            masked_stored_ip = ipaddress.ip_network(field_mask, False)
+            if masked_ip_addr == masked_stored_ip:
                 return stored_flow_dict
-
     return False
 
 
