@@ -381,3 +381,139 @@ class TestMain(TestCase):
         self.napp.stored_flows = {dpid: {"flow_list": flow_list}}
         self.napp.check_storehouse_consistency(switch)
         mock_install_flows.assert_called()
+
+    @patch('napps.kytos.flow_manager.main.Main._install_flows')
+    @patch('napps.kytos.flow_manager.main.FlowFactory.get_class')
+    @patch("napps.kytos.flow_manager.main.StoreHouse.save_flow")
+    def test_no_strict_delete(self, *args):
+        """Test the non-strict matching method.
+
+        Test non-strict matching to delete a Flow using a cookie.
+        """
+        (mock_save_flow, _, _) = args
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid, 0x04)
+        switch.id = dpid
+        stored_flow = {
+                        "command": "add",
+                        "flow": {
+                            "actions": [
+                                {
+                                    "action_type": "set_vlan",
+                                    "vlan_id": 300
+                                }
+                            ],
+                            "cookie": 6191162389751548793,
+                            "match": {
+                                "dl_vlan": 300,
+                                "in_port": 1
+                            }
+                        }
+                    }
+        stored_flow2 = {
+                        "command": "add",
+                        "flow": {
+                                "actions": [],
+                                "cookie": 4961162389751548787,
+                                "match": {
+                                    "in_port": 2
+                                    }
+                                }
+                        }
+        flow_to_install = {
+                            "cookie": 6191162389751548793,
+                            "cookie_mask": 18446744073709551615
+                        }
+        flow_list = {"flow_list": [stored_flow, stored_flow2]}
+        command = "delete"
+        self.napp.stored_flows = {dpid: flow_list}
+
+        self.napp._store_changed_flows(command, flow_to_install, switch)
+        mock_save_flow.assert_called()
+        self.assertEqual(len(self.napp.stored_flows), 1)
+
+    @patch('napps.kytos.flow_manager.main.Main._install_flows')
+    @patch('napps.kytos.flow_manager.main.FlowFactory.get_class')
+    @patch("napps.kytos.flow_manager.main.StoreHouse.save_flow")
+    def test_no_strict_delete_with_ipv4(self, *args):
+        """Test the non-strict matching method.
+
+        Test non-strict matching to delete a Flow using IPv4.
+        """
+        (mock_save_flow, _, _) = args
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid, 0x04)
+        switch.id = dpid
+        stored_flow = {
+                    "command": "add",
+                    "flow": {
+                        "priority": 10,
+                        "cookie": 84114904,
+                        "match": {
+                            "ipv4_src": "192.168.1.120",
+                            "ipv4_dst": "192.168.0.2",
+                        },
+                        "actions": []
+                        }
+                    }
+        stored_flow2 = {
+                        "command": "add",
+                        "flow": {
+                                    "actions": [],
+                                    "cookie": 4961162389751548787,
+                                    "match": {
+                                        "in_port": 2
+                                    }
+                                }
+                        }
+        flow_to_install = {"match": {"ipv4_src": '192.168.1.1/24'}}
+        flow_list = {"flow_list": [stored_flow, stored_flow2]}
+        command = "delete"
+        self.napp.stored_flows = {dpid: flow_list}
+
+        self.napp._store_changed_flows(command, flow_to_install, switch)
+        mock_save_flow.assert_called()
+        self.assertEqual(len(self.napp.stored_flows[dpid]['flow_list']), 2)
+
+    @patch('napps.kytos.flow_manager.main.Main._install_flows')
+    @patch('napps.kytos.flow_manager.main.FlowFactory.get_class')
+    @patch("napps.kytos.flow_manager.main.StoreHouse.save_flow")
+    def test_no_strict_delete_with_ipv4_fail(self, *args):
+        """Test the non-strict matching method.
+
+        Test non-strict Fail case matching to delete a Flow using IPv4.
+        """
+        (mock_save_flow, _, _) = args
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid, 0x04)
+        switch.id = dpid
+        stored_flow = {
+                    "command": "add",
+                    "flow": {
+                        "priority": 10,
+                        "cookie": 84114904,
+                        "match": {
+                            "ipv4_src": "192.168.2.1",
+                            "ipv4_dst": "192.168.0.2",
+                        },
+                        "actions": []
+                        }
+                    }
+        stored_flow2 = {
+                        "command": "add",
+                        "flow": {
+                                    "actions": [],
+                                    "cookie": 4961162389751548787,
+                                    "match": {
+                                        "in_port": 2
+                                    }
+                                }
+                        }
+        flow_to_install = {"match": {"ipv4_src": '192.168.1.1/24'}}
+        flow_list = {"flow_list": [stored_flow, stored_flow2]}
+        command = "delete"
+        self.napp.stored_flows = {dpid: flow_list}
+
+        self.napp._store_changed_flows(command, flow_to_install, switch)
+        mock_save_flow.assert_called()
+        self.assertEqual(len(self.napp.stored_flows[dpid]['flow_list']), 3)
