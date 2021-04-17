@@ -109,7 +109,7 @@ class Main(KytosNApp):
             elif command == 'delete':
                 log.info('A consistency problem was detected in '
                          f'switch {dpid}.')
-                command = 'strict_delete'
+                command = 'delete_strict'
                 self._install_flows(command, flow, [switch])
                 log.info(f'Flow forwarded to switch {dpid} to be deleted.')
 
@@ -122,7 +122,7 @@ class Main(KytosNApp):
                 log.info('A consistency problem was detected in '
                          f'switch {dpid}.')
                 flow = {'flows': [installed_flow.as_dict()]}
-                command = 'strict_delete'
+                command = 'delete_strict'
                 self._install_flows(command, flow, [switch])
                 log.info(f'Flow forwarded to switch {dpid} to be deleted.')
             else:
@@ -136,7 +136,7 @@ class Main(KytosNApp):
                     log.info('A consistency problem was detected in '
                              f'switch {dpid}.')
                     flow = {'flows': [installed_flow.as_dict()]}
-                    command = 'strict_delete'
+                    command = 'delete_strict'
                     self._install_flows(command, flow, [switch])
                     log.info(f'Flow forwarded to switch {dpid} to be deleted.')
 
@@ -290,7 +290,7 @@ class Main(KytosNApp):
                 flow = serializer.from_dict(flow_dict, switch)
                 if command == "delete":
                     flow_mod = flow.as_of_delete_flow_mod()
-                elif command == "strict_delete":
+                elif command == "delete_strict":
                     flow_mod = flow.as_of_strict_delete_flow_mod()
                 elif command == "add":
                     flow_mod = flow.as_of_add_flow_mod()
@@ -321,7 +321,7 @@ class Main(KytosNApp):
         """Send an Event to other apps informing about a FlowMod."""
         if command == 'add':
             name = 'kytos/flow_manager.flow.added'
-        elif command in ('delete', 'strict_delete'):
+        elif command in ('delete', 'delete_strict'):
             name = 'kytos/flow_manager.flow.removed'
         elif command == 'error':
             name = 'kytos/flow_manager.flow.error'

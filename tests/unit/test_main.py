@@ -146,7 +146,7 @@ class TestMain(TestCase):
     @patch('napps.kytos.flow_manager.main.Main._add_flow_mod_sent')
     @patch('napps.kytos.flow_manager.main.Main._send_flow_mod')
     @patch('napps.kytos.flow_manager.main.FlowFactory.get_class')
-    def test_install_flows_with_strict_delete(self, *args):
+    def test_install_flows_with_delete_strict(self, *args):
         """Test _install_flows method with strict delete command."""
         (mock_flow_factory, mock_send_flow_mod, mock_add_flow_mod_sent,
          mock_send_napp_event, _) = args
@@ -160,13 +160,13 @@ class TestMain(TestCase):
 
         flows_dict = {'flows': [MagicMock()]}
         switches = [self.switch_01]
-        self.napp._install_flows('strict_delete', flows_dict, switches)
+        self.napp._install_flows('delete_strict', flows_dict, switches)
 
         mock_send_flow_mod.assert_called_with(flow.switch, flow_mod)
         mock_add_flow_mod_sent.assert_called_with(flow_mod.header.xid,
-                                                  flow, 'strict_delete')
+                                                  flow, 'delete_strict')
         mock_send_napp_event.assert_called_with(self.switch_01, flow,
-                                                'strict_delete')
+                                                'delete_strict')
 
     def test_add_flow_mod_sent(self):
         """Test _add_flow_mod_sent method."""
@@ -193,7 +193,7 @@ class TestMain(TestCase):
         switch = get_switch_mock("00:00:00:00:00:00:00:01", 0x04)
         flow = MagicMock()
 
-        for command in ['add', 'delete', 'strict_delete', 'error']:
+        for command in ['add', 'delete', 'delete_strict', 'error']:
             self.napp._send_napp_event(switch, flow, command)
 
         self.assertEqual(mock_buffers_put.call_count, 4)
