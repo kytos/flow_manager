@@ -141,6 +141,33 @@ class TestMain(TestCase):
                                                   flow, 'add')
         mock_send_napp_event.assert_called_with(self.switch_01, flow, 'add')
 
+    @patch('napps.kytos.flow_manager.main.Main._store_changed_flows')
+    @patch('napps.kytos.flow_manager.main.Main._send_napp_event')
+    @patch('napps.kytos.flow_manager.main.Main._add_flow_mod_sent')
+    @patch('napps.kytos.flow_manager.main.Main._send_flow_mod')
+    @patch('napps.kytos.flow_manager.main.FlowFactory.get_class')
+    def test_install_flows_with_delete_strict(self, *args):
+        """Test _install_flows method with strict delete command."""
+        (mock_flow_factory, mock_send_flow_mod, mock_add_flow_mod_sent,
+         mock_send_napp_event, _) = args
+        serializer = MagicMock()
+        flow = MagicMock()
+        flow_mod = MagicMock()
+
+        flow.as_of_strict_delete_flow_mod.return_value = flow_mod
+        serializer.from_dict.return_value = flow
+        mock_flow_factory.return_value = serializer
+
+        flows_dict = {'flows': [MagicMock()]}
+        switches = [self.switch_01]
+        self.napp._install_flows('delete_strict', flows_dict, switches)
+
+        mock_send_flow_mod.assert_called_with(flow.switch, flow_mod)
+        mock_add_flow_mod_sent.assert_called_with(flow_mod.header.xid,
+                                                  flow, 'delete_strict')
+        mock_send_napp_event.assert_called_with(self.switch_01, flow,
+                                                'delete_strict')
+
     def test_add_flow_mod_sent(self):
         """Test _add_flow_mod_sent method."""
         xid = 0
@@ -166,10 +193,10 @@ class TestMain(TestCase):
         switch = get_switch_mock("00:00:00:00:00:00:00:01", 0x04)
         flow = MagicMock()
 
-        for command in ['add', 'delete', 'error']:
+        for command in ['add', 'delete', 'delete_strict', 'error']:
             self.napp._send_napp_event(switch, flow, command)
 
-        self.assertEqual(mock_buffers_put.call_count, 3)
+        self.assertEqual(mock_buffers_put.call_count, 4)
 
     @patch('napps.kytos.flow_manager.main.Main._send_napp_event')
     def test_handle_errors(self, mock_send_napp_event):
