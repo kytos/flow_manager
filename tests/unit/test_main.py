@@ -7,7 +7,7 @@ from kytos.lib.helpers import (get_connection_mock, get_controller_mock,
                                get_test_client)
 
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-public-methods
 class TestMain(TestCase):
     """Tests for the Main class."""
 
@@ -395,35 +395,25 @@ class TestMain(TestCase):
         switch = get_switch_mock(dpid, 0x04)
         switch.id = dpid
         stored_flow = {
-                        "command": "add",
-                        "flow": {
-                            "actions": [
-                                {
-                                    "action_type": "set_vlan",
-                                    "vlan_id": 300
-                                }
-                            ],
-                            "cookie": 6191162389751548793,
-                            "match": {
-                                "dl_vlan": 300,
-                                "in_port": 1
-                            }
-                        }
-                    }
+            "command": "add",
+            "flow": {
+                "actions": [{"action_type": "set_vlan", "vlan_id": 300}],
+                "cookie": 6191162389751548793,
+                "match": {"dl_vlan": 300, "in_port": 1},
+            },
+        }
         stored_flow2 = {
-                        "command": "add",
-                        "flow": {
-                                "actions": [],
-                                "cookie": 4961162389751548787,
-                                "match": {
-                                    "in_port": 2
-                                    }
-                                }
-                        }
+            "command": "add",
+            "flow": {
+                "actions": [],
+                "cookie": 4961162389751548787,
+                "match": {"in_port": 2},
+            },
+        }
         flow_to_install = {
-                            "cookie": 6191162389751548793,
-                            "cookie_mask": 18446744073709551615
-                        }
+            "cookie": 6191162389751548793,
+            "cookie_mask": 18446744073709551615,
+        }
         flow_list = {"flow_list": [stored_flow, stored_flow2]}
         command = "delete"
         self.napp.stored_flows = {dpid: flow_list}
@@ -445,27 +435,25 @@ class TestMain(TestCase):
         switch = get_switch_mock(dpid, 0x04)
         switch.id = dpid
         stored_flow = {
-                    "command": "add",
-                    "flow": {
-                        "priority": 10,
-                        "cookie": 84114904,
-                        "match": {
-                            "ipv4_src": "192.168.1.120",
-                            "ipv4_dst": "192.168.0.2",
-                        },
-                        "actions": []
-                        }
-                    }
+            "command": "add",
+            "flow": {
+                "priority": 10,
+                "cookie": 84114904,
+                "match": {
+                    "ipv4_src": "192.168.1.120",
+                    "ipv4_dst": "192.168.0.2",
+                },
+                "actions": [],
+            },
+        }
         stored_flow2 = {
-                        "command": "add",
-                        "flow": {
-                                    "actions": [],
-                                    "cookie": 4961162389751548787,
-                                    "match": {
-                                        "in_port": 2
-                                    }
-                                }
-                        }
+            "command": "add",
+            "flow": {
+                "actions": [],
+                "cookie": 4961162389751548787,
+                "match": {"in_port": 2},
+            },
+        }
         flow_to_install = {"match": {"ipv4_src": '192.168.1.1/24'}}
         flow_list = {"flow_list": [stored_flow, stored_flow2]}
         command = "delete"
@@ -488,27 +476,25 @@ class TestMain(TestCase):
         switch = get_switch_mock(dpid, 0x04)
         switch.id = dpid
         stored_flow = {
-                    "command": "add",
-                    "flow": {
-                        "priority": 10,
-                        "cookie": 84114904,
-                        "match": {
-                            "ipv4_src": "192.168.2.1",
-                            "ipv4_dst": "192.168.0.2",
-                        },
-                        "actions": []
-                        }
-                    }
+            "command": "add",
+            "flow": {
+                "priority": 10,
+                "cookie": 84114904,
+                "match": {
+                    "ipv4_src": "192.168.2.1",
+                    "ipv4_dst": "192.168.0.2",
+                },
+                "actions": [],
+            },
+        }
         stored_flow2 = {
-                        "command": "add",
-                        "flow": {
-                                    "actions": [],
-                                    "cookie": 4961162389751548787,
-                                    "match": {
-                                        "in_port": 2
-                                    }
-                                }
-                        }
+            "command": "add",
+            "flow": {
+                "actions": [],
+                "cookie": 4961162389751548787,
+                "match": {"in_port": 2},
+            },
+        }
         flow_to_install = {"match": {"ipv4_src": '192.168.1.1/24'}}
         flow_list = {"flow_list": [stored_flow, stored_flow2]}
         command = "delete"
