@@ -167,6 +167,17 @@ class Main(KytosNApp):
             return True
         return False
 
+    @listen_to('kytos/of_core.flow_stats.received')
+    def on_flow_stats_check_consistency(self, event):
+        """Check the consistency of a switch upon receiving flow stats."""
+        if CONSISTENCY_INTERVAL != 0:
+            return
+        switch = event.content['switch']
+        if switch.is_enabled():
+            self.check_storehouse_consistency(switch)
+            if switch.dpid in self.stored_flows:
+                self.check_switch_consistency(switch)
+
     def consistency_check(self):
         """Check the consistency of flows in each switch."""
         switches = self.controller.switches.values()
