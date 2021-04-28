@@ -9,7 +9,7 @@ from pyof.v0x01.common.phy_port import PortConfig
 
 from kytos.core import KytosEvent, KytosNApp, log, rest
 from kytos.core.helpers import listen_to
-from napps.kytos.flow_manager.match import match_flows
+from napps.kytos.flow_manager.match import match_flow
 from napps.kytos.flow_manager.storehouse import StoreHouse
 from napps.kytos.of_core.flow import FlowFactory
 
@@ -204,7 +204,7 @@ class Main(KytosNApp):
 
                 if installed_flow['command'] == 'delete':
                     # No strict match
-                    if match_flows(flow, version, stored_flow['flow']):
+                    if match_flow(flow, version, stored_flow['flow']):
                         deleted_flows.append(stored_flow)
 
                 elif installed_flow_obj == stored_flow_obj:
