@@ -36,10 +36,22 @@ class TestMain(TestCase):
 
     def test_rest_list_without_dpid(self):
         """Test list rest method withoud dpid."""
+        flow_dict = {
+            "priority": 13,
+            "cookie": 84114964,
+            "command": "add",
+            "match": {"dl_dst": "00:15:af:d5:38:98"},
+        }
+        flow_dict_2 = {
+            "priority": 18,
+            "cookie": 84114964,
+            "command": "add",
+            "match": {"dl_dst": "00:15:af:d5:38:98"},
+        }
         flow_1 = MagicMock()
-        flow_1.as_dict.return_value = {'flow_1': 'data'}
+        flow_1.as_dict.return_value = flow_dict
         flow_2 = MagicMock()
-        flow_2.as_dict.return_value = {'flow_2': 'data'}
+        flow_2.as_dict.return_value = flow_dict_2
         self.switch_01.flows.append(flow_1)
         self.switch_02.flows.append(flow_2)
 
@@ -47,23 +59,30 @@ class TestMain(TestCase):
         url = f'{self.API_URL}/v2/flows'
 
         response = api.get(url)
-        expected = {'00:00:00:00:00:00:00:01': {'flows': [{'flow_1': 'data'}]},
-                    '00:00:00:00:00:00:00:02': {'flows': [{'flow_2': 'data'}]}}
-
+        expected = {
+            '00:00:00:00:00:00:00:01': {'flows': [flow_dict]},
+            '00:00:00:00:00:00:00:02': {'flows': [flow_dict_2]},
+        }
         self.assertEqual(response.json, expected)
         self.assertEqual(response.status_code, 200)
 
     def test_rest_list_with_dpid(self):
         """Test list rest method with dpid."""
+        flow_dict = {
+            "priority": 13,
+            "cookie": 84114964,
+            "command": "add",
+            "match": {"dl_dst": "00:15:af:d5:38:98"},
+        }
         flow_1 = MagicMock()
-        flow_1.as_dict.return_value = {'flow_1': 'data'}
+        flow_1.as_dict.return_value = flow_dict
         self.switch_01.flows.append(flow_1)
 
         api = get_test_client(self.napp.controller, self.napp)
         url = f'{self.API_URL}/v2/flows/00:00:00:00:00:00:00:01'
 
         response = api.get(url)
-        expected = {'00:00:00:00:00:00:00:01': {'flows': [{'flow_1': 'data'}]}}
+        expected = {'00:00:00:00:00:00:00:01': {'flows': [flow_dict]}}
 
         self.assertEqual(response.json, expected)
         self.assertEqual(response.status_code, 200)

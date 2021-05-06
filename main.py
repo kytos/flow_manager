@@ -2,6 +2,7 @@
 from collections import OrderedDict
 
 from flask import jsonify, request
+from pyof.foundation.base import UBIntBase
 from pyof.v0x01.asynchronous.error_msg import BadActionCode
 from pyof.v0x01.common.phy_port import PortConfig
 
@@ -12,6 +13,16 @@ from napps.kytos.of_core.flow import FlowFactory
 
 from .exceptions import InvalidCommandError
 from .settings import CONSISTENCY_INTERVAL, FLOWS_DICT_MAX_SIZE
+
+
+def cast_fields(flow_dict):
+    """Make casting the match fields from UBInt() to native int ."""
+    match = flow_dict['match']
+    for field, value in match.items():
+        if isinstance(value, UBIntBase):
+            match[field] = int(value)
+    flow_dict['match'] = match
+    return flow_dict
 
 
 class Main(KytosNApp):
@@ -221,7 +232,8 @@ class Main(KytosNApp):
         switch_flows = {}
 
         for switch in switches:
-            flows_dict = [flow.as_dict() for flow in switch.flows]
+            flows_dict = [cast_fields(flow.as_dict())
+                          for flow in switch.flows]
             switch_flows[switch.dpid] = {'flows': flows_dict}
 
         return jsonify(switch_flows)
