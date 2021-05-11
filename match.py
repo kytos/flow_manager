@@ -7,14 +7,6 @@ from pyof.v0x01.common.flow_match import FlowWildCards
 IPV4_ETH_TYPE = 2048
 
 
-def format_request(request):
-    """Format user request to match function format."""
-    args = {}
-    for key, value in request.items():
-        args[key] = value
-    return args
-
-
 def match_flow(flow_to_install, version, stored_flow_dict):
     """Check that the flow fields match.
 
@@ -23,7 +15,7 @@ def match_flow(flow_to_install, version, stored_flow_dict):
     Does not require that all fields match.
     """
     if version == 0x01:
-        return match10(flow_to_install, stored_flow_dict)
+        return match10_no_strict(flow_to_install, stored_flow_dict)
     elif version == 0x04:
         return match13_no_strict(flow_to_install, stored_flow_dict)
     raise NotImplementedError(f'Unsupported OpenFlow version {version}')
@@ -41,53 +33,53 @@ def _get_match_fields(flow_dict):
 # pylint: disable=too-many-return-statements, too-many-statements, R0912
 def _match_ipv4_10(match_fields, args, wildcards):
     """Match IPV4 fields against packet with Flow (OF1.0)."""
-    # if not 'eth_type' in (match_fields, wildcards):
-    #     return False
-    # if not match_fields['eth_type'] == IPV4_ETH_TYPE:
-    #     return False
-    flow_ip_int = int(ipaddress.IPv4Address(match_fields.get('ipv4_src')))
+    if match_fields.get('dl_type') == IPV4_ETH_TYPE:
+        return False
+    flow_ip_int = int(ipaddress.IPv4Address(match_fields.get('nw_src', 0)))
     if flow_ip_int != 0:
         mask = (wildcards
                 & FlowWildCards.OFPFW_NW_SRC_MASK) >> \
                 FlowWildCards.OFPFW_NW_SRC_SHIFT
         if mask > 32:
             mask = 32
-        if mask != 32 and 'ipv4_src' not in args:
+        if mask != 32 and 'nw_src' not in args:
             return False
         mask = (0xffffffff << mask) & 0xffffffff
-        ip_int = int(ipaddress.IPv4Address(args.get('ipv4_src')))
+        ip_int = int(ipaddress.IPv4Address(args.get('nw_src')))
         if ip_int & mask != flow_ip_int & mask:
             return False
-    flow_ip_int = int(ipaddress.IPv4Address(match_fields['ipv4_dst']))
+    flow_ip_int = int(ipaddress.IPv4Address(match_fields.get('nw_dst', 0)))
     if flow_ip_int != 0:
         mask = (wildcards
                 & FlowWildCards.OFPFW_NW_DST_MASK) >> \
                 FlowWildCards.OFPFW_NW_DST_SHIFT
         if mask > 32:
             mask = 32
-        if mask != 32 and 'ipv4_dst' not in args:
+        if mask != 32 and 'nw_dst' not in args:
             return False
         mask = (0xffffffff << mask) & 0xffffffff
-        ip_int = int(ipaddress.IPv4Address(args.get('ipv4_dst')))
+        ip_int = int(ipaddress.IPv4Address(args.get('nw_dst')))
         if ip_int & mask != flow_ip_int & mask:
             return False
     if not wildcards & FlowWildCards.OFPFW_NW_TOS:
-        if match_fields.get('ip_tos') != int(args.get('ip_tos')):
+        if ('nw_tos', 'nw_proto', 'tp_src', 'tp_dst') not in args:
+            return True
+        if match_fields.get('nw_tos') != int(args.get('nw_tos')):
             return False
     if not wildcards & FlowWildCards.OFPFW_NW_PROTO:
-        if match_fields.get('ip_proto') != int(args.get('ip_proto')):
+        if match_fields.get('nw_proto') != int(args.get('nw_proto')):
             return False
     if not wildcards & FlowWildCards.OFPFW_TP_SRC:
-        if match_fields.get('tcp_src') != int(args.get('tp_src')):
+        if match_fields.get('tp_src') != int(args.get('tp_src')):
             return False
     if not wildcards & FlowWildCards.OFPFW_TP_DST:
-        if match_fields.get('tcp_dst') != int(args.get('tp_dst')):
+        if match_fields.get('tp_dst') != int(args.get('tp_dst')):
             return False
     return True
 
 
 # pylint: disable=too-many-return-statements, too-many-statements, R0912
-def match10(flow_dict, args):
+def match10_no_strict(flow_dict, args):
     """Match a packet against this flow (OF1.0)."""
     args = _get_match_fields(args)
     match_fields = _get_match_fields(flow_dict)
@@ -96,19 +88,19 @@ def match10(flow_dict, args):
         if match_fields.get('in_port') != args.get('in_port'):
             return False
     if not wildcards & FlowWildCards.OFPFW_DL_VLAN_PCP:
-        if match_fields.get('vlan_pcp') != args.get('vlan_pcp'):
+        if match_fields.get('dl_vlan_pcp') != args.get('dl_vlan_pcp'):
             return False
     if not wildcards & FlowWildCards.OFPFW_DL_VLAN:
-        if match_fields.get('vlan_vid') != args.get('vlan_vid'):
+        if match_fields.get('dl_vlan') != args.get('dl_vlan'):
             return False
     if not wildcards & FlowWildCards.OFPFW_DL_SRC:
-        if match_fields.get('eth_src') != args.get('eth_src'):
+        if match_fields.get('dl_src') != args.get('dl_src'):
             return False
     if not wildcards & FlowWildCards.OFPFW_DL_DST:
-        if match_fields.get('eth_dst') != args.get('eth_dst'):
+        if match_fields.get('dl_dst') != args.get('dl_dst'):
             return False
     if not wildcards & FlowWildCards.OFPFW_DL_TYPE:
-        if match_fields.get('eth_type') != args.get('eth_type'):
+        if match_fields.get('dl_type') != args.get('dl_type'):
             return False
     if not _match_ipv4_10(match_fields, args, wildcards):
         return False
