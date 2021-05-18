@@ -70,6 +70,9 @@ class Main(KytosNApp):
     @listen_to('kytos/of_core.handshake.completed')
     def resend_stored_flows(self, event):
         """Resend stored Flows."""
+        # if consistency check is enabled, it should take care of this
+        if CONSISTENCY_INTERVAL >= 0:
+            return
         switch = event.content['switch']
         dpid = str(switch.dpid)
         # This can be a problem because this code is running a thread
