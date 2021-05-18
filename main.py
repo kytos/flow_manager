@@ -252,6 +252,27 @@ class Main(KytosNApp):
 
         return jsonify(switch_flows)
 
+    @listen_to('kytos.flow_manager.flows.(install|delete)')
+    def event_add_flow(self, event):
+        """Install or delete flows in the switches through events.
+
+        Install or delete Flow of switches identified by dpid.
+        """
+        try:
+            dpid = event.content['dpid']
+            flow_dict = event.content['flow_dict']
+            command = event.content['command']
+        except KeyError as error:
+            log.error("Error getting fields to install or remove "
+                      f"Flows: {error}")
+            return
+        try:
+            switch = self.controller.get_switch_by_dpid(dpid)
+            self._install_flows(command, flow_dict, [switch])
+        except InvalidCommandError as error:
+            log.error("Error installing or deleting Flow through"
+                      f" Kytos Event: {error}")
+
     @rest('v2/flows', methods=['POST'])
     @rest('v2/flows/<dpid>', methods=['POST'])
     def add(self, dpid=None):

@@ -187,6 +187,35 @@ class TestMain(TestCase):
         mock_send_napp_event.assert_called_with(self.switch_01, flow,
                                                 'delete_strict')
 
+    @patch('napps.kytos.flow_manager.main.Main._install_flows')
+    def test_event_add_flow(self, mock_install_flows):
+        """Test method for installing flows on the switches through events."""
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid)
+        self.napp.controller.switches = {dpid: switch}
+        mock_flow_dict = MagicMock()
+        event = get_kytos_event_mock(name='kytos.flow_manager.flows.install',
+                                     content={'dpid': dpid,
+                                              'command': 'add',
+                                              'flow_dict': mock_flow_dict})
+        self.napp.event_add_flow(event)
+        mock_install_flows.assert_called_with('add', mock_flow_dict, [switch])
+
+    @patch('napps.kytos.flow_manager.main.Main._install_flows')
+    def test_event_add_flow_delete(self, mock_install_flows):
+        """Test method for removing flows on the switches through events."""
+        dpid = "00:00:00:00:00:00:00:01"
+        switch = get_switch_mock(dpid)
+        self.napp.controller.switches = {dpid: switch}
+        mock_flow_dict = MagicMock()
+        event = get_kytos_event_mock(name='kytos.flow_manager.flows.delete',
+                                     content={'dpid': dpid,
+                                              'command': 'delete',
+                                              'flow_dict': mock_flow_dict})
+        self.napp.event_add_flow(event)
+        mock_install_flows.assert_called_with('delete', mock_flow_dict,
+                                              [switch])
+
     def test_add_flow_mod_sent(self):
         """Test _add_flow_mod_sent method."""
         xid = 0
