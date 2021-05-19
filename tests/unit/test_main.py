@@ -196,7 +196,6 @@ class TestMain(TestCase):
         mock_flow_dict = MagicMock()
         event = get_kytos_event_mock(name='kytos.flow_manager.flows.install',
                                      content={'dpid': dpid,
-                                              'command': 'add',
                                               'flow_dict': mock_flow_dict})
         self.napp.event_add_flow(event)
         mock_install_flows.assert_called_with('add', mock_flow_dict, [switch])
@@ -210,7 +209,6 @@ class TestMain(TestCase):
         mock_flow_dict = MagicMock()
         event = get_kytos_event_mock(name='kytos.flow_manager.flows.delete',
                                      content={'dpid': dpid,
-                                              'command': 'delete',
                                               'flow_dict': mock_flow_dict})
         self.napp.event_add_flow(event)
         mock_install_flows.assert_called_with('delete', mock_flow_dict,

@@ -261,11 +261,16 @@ class Main(KytosNApp):
         try:
             dpid = event.content['dpid']
             flow_dict = event.content['flow_dict']
-            command = event.content['command']
         except KeyError as error:
             log.error("Error getting fields to install or remove "
                       f"Flows: {error}")
             return
+
+        if event.name == 'kytos.flow_manager.flows.install':
+            command = 'add'
+        else:
+            command = 'delete'
+
         try:
             switch = self.controller.get_switch_by_dpid(dpid)
             self._install_flows(command, flow_dict, [switch])
