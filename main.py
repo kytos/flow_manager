@@ -6,6 +6,7 @@ from flask import jsonify, request
 from pyof.foundation.base import UBIntBase
 from pyof.v0x01.asynchronous.error_msg import BadActionCode
 from pyof.v0x01.common.phy_port import PortConfig
+from werkzeug.exceptions import NotFound
 
 from kytos.core import KytosEvent, KytosNApp, log, rest
 from kytos.core.helpers import listen_to
@@ -245,6 +246,10 @@ class Main(KytosNApp):
             switches = self.controller.switches.values()
         else:
             switches = [self.controller.get_switch_by_dpid(dpid)]
+
+            if not any(switches):
+                response = "Switch not found"
+                raise NotFound(response)
 
         switch_flows = {}
 
