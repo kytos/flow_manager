@@ -113,7 +113,7 @@ class Main(KytosNApp):
     def resend_stored_flows(self, event):
         """Resend stored Flows."""
         # if consistency check is enabled, it should take care of this
-        if CONSISTENCY_INTERVAL >= 0:
+        if ENABLE_CONSISTENCY_CHECK is True:
             return
         switch = event.content['switch']
         dpid = str(switch.dpid)
