@@ -248,8 +248,7 @@ class Main(KytosNApp):
             switches = [self.controller.get_switch_by_dpid(dpid)]
 
             if not any(switches):
-                response = "Switch not found"
-                raise NotFound(response)
+                raise NotFound("Switch not found")
 
         switch_flows = {}
 
