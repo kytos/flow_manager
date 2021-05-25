@@ -30,16 +30,15 @@ def cast_fields(flow_dict):
 
 def _validate_range(values):
     """Check that the range of flows ignored by the consistency is valid."""
-    instance = int
     if len(values) != 2:
         msg = f'The tuple must have 2 items, not {len(values)}'
         raise ValueError(msg)
     first, second = values
     if second < first:
-        msg = (f'The first value is bigger than the second: {values}')
+        msg = f'The first value is bigger than the second: {values}'
         raise ValueError(msg)
-    if not isinstance(first, instance) or not isinstance(second, instance):
-        msg = 'The elements of the range must be of the class {instance}'
+    if not isinstance(first, int) or not isinstance(second, int):
+        msg = f'Expected a tuple of integers, received {values}'
         raise TypeError(msg)
 
 
