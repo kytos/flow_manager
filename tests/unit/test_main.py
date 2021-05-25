@@ -87,6 +87,16 @@ class TestMain(TestCase):
         self.assertEqual(response.json, expected)
         self.assertEqual(response.status_code, 200)
 
+    def test_list_flows_fail_case(self):
+        """Test the failure case to recover all flows from a switch by dpid.
+
+        Failure case: Switch not found.
+        """
+        api = get_test_client(self.napp.controller, self.napp)
+        url = f'{self.API_URL}/v2/flows/00:00:00:00:00:00:00:05'
+        response = api.get(url)
+        self.assertEqual(response.status_code, 404)
+
     @patch('napps.kytos.flow_manager.main.Main._install_flows')
     def test_rest_add_and_delete_without_dpid(self, mock_install_flows):
         """Test add and delete rest method without dpid."""
