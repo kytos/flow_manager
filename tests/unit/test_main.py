@@ -105,11 +105,11 @@ class TestMain(TestCase):
         for method in ['flows', 'delete']:
             url = f'{self.API_URL}/v2/{method}'
 
-            response_1 = api.post(url, json={'data': '123'})
+            response_1 = api.post(url, json={'flows': [{"priority": 25}]})
             response_2 = api.post(url)
 
             self.assertEqual(response_1.status_code, 200)
-            self.assertEqual(response_2.status_code, 404)
+            self.assertEqual(response_2.status_code, 400)
 
         self.assertEqual(mock_install_flows.call_count, 2)
 
@@ -117,26 +117,41 @@ class TestMain(TestCase):
     def test_rest_add_and_delete_with_dpid(self, mock_install_flows):
         """Test add and delete rest method with dpid."""
         api = get_test_client(self.napp.controller, self.napp)
+        data = {'flows': [{"priority": 25}]}
+        for method in ['flows', 'delete']:
+            url_1 = f'{self.API_URL}/v2/{method}/00:00:00:00:00:00:00:01'
+            url_2 = f'{self.API_URL}/v2/{method}/00:00:00:00:00:00:00:02'
 
+            response_1 = api.post(url_1, json=data)
+            response_2 = api.post(url_2, json=data)
+
+            self.assertEqual(response_1.status_code, 200)
+            if method == 'delete':
+                self.assertEqual(response_2.status_code, 200)
+
+        self.assertEqual(mock_install_flows.call_count, 3)
+
+    @patch('napps.kytos.flow_manager.main.Main._install_flows')
+    def test_rest_add_and_delete_with_dpi_fail(self, mock_install_flows):
+        """Test fail case the add and delete rest method with dpid."""
+        api = get_test_client(self.napp.controller, self.napp)
+        data = {'flows': [{"priority": 25}]}
         for method in ['flows', 'delete']:
             url_1 = f'{self.API_URL}/v2/{method}/00:00:00:00:00:00:00:01'
             url_2 = f'{self.API_URL}/v2/{method}/00:00:00:00:00:00:00:02'
             url_3 = f'{self.API_URL}/v2/{method}/00:00:00:00:00:00:00:03'
 
             response_1 = api.post(url_1)
-            response_2 = api.post(url_1, json={'data': '123'})
-            response_3 = api.post(url_2, json={'data': '123'})
-            response_4 = api.post(url_3, json={'data': '123'})
+            response_2 = api.post(url_2, data=data)
+            response_3 = api.post(url_2, json={})
+            response_4 = api.post(url_3, json=data)
 
-            self.assertEqual(response_1.status_code, 404)
-            self.assertEqual(response_2.status_code, 200)
-            if method == 'flows':
-                self.assertEqual(response_3.status_code, 404)
-            else:
-                self.assertEqual(response_3.status_code, 200)
+            self.assertEqual(response_1.status_code, 400)
+            self.assertEqual(response_2.status_code, 415)
+            self.assertEqual(response_3.status_code, 400)
             self.assertEqual(response_4.status_code, 404)
 
-        self.assertEqual(mock_install_flows.call_count, 3)
+        self.assertEqual(mock_install_flows.call_count, 0)
 
     def test_get_all_switches_enabled(self):
         """Test _get_all_switches_enabled method."""

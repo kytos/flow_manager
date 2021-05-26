@@ -6,7 +6,7 @@ from flask import jsonify, request
 from pyof.foundation.base import UBIntBase
 from pyof.v0x01.asynchronous.error_msg import BadActionCode
 from pyof.v0x01.common.phy_port import PortConfig
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import BadRequest, NotFound, UnsupportedMediaType
 
 from kytos.core import KytosEvent, KytosNApp, log, rest
 from kytos.core.helpers import listen_to
@@ -370,9 +370,23 @@ class Main(KytosNApp):
     def _send_flow_mods_from_request(self, dpid, command, flows_dict=None):
         """Install FlowsMods from request."""
         if flows_dict is None:
-            flows_dict = request.get_json()
-            if flows_dict is None:
-                return jsonify({"response": 'flows dict is none.'}), 404
+            flows_dict = request.get_json() or {}
+            content_type = request.content_type
+            # Get flow to check if the request is well-formed
+            flows = flows_dict.get('flows', [])
+
+            if content_type is None:
+                result = 'The request body is empty'
+                raise BadRequest(result)
+
+            if content_type != 'application/json':
+                result = ('The content type must be application/json '
+                          f'(received {content_type}).')
+                raise UnsupportedMediaType(result)
+
+            if not any(flows_dict) or not any(flows):
+                result = 'The request body is not well-formed.'
+                raise BadRequest(result)
 
         if dpid:
             switch = self.controller.get_switch_by_dpid(dpid)

@@ -26,6 +26,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Flows'
+        '404':
+          description: Switch ID not found.
     post:
       tags:
         - Add
@@ -46,7 +48,9 @@ paths:
         '202':
            description: FlowMod messages sent.
         '400':
-           description: Invalid JSON flow.
+           description: Bad request. Invalid format.
+        '415':
+           description: The request body mimetype is not application/json.
     delete:
       tags:
         - Delete
