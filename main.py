@@ -15,9 +15,9 @@ from napps.kytos.flow_manager.storehouse import StoreHouse
 from napps.kytos.of_core.flow import FlowFactory
 
 from .exceptions import InvalidCommandError
-from .settings import ENABLE_CONSISTENCY_CHECK
 from .settings import (CONSISTENCY_COOKIE_IGNORED_RANGE,
-                       CONSISTENCY_TABLE_ID_IGNORED_RANGE, FLOWS_DICT_MAX_SIZE)
+                       CONSISTENCY_TABLE_ID_IGNORED_RANGE,
+                       ENABLE_CONSISTENCY_CHECK, FLOWS_DICT_MAX_SIZE)
 
 
 def cast_fields(flow_dict):
@@ -209,7 +209,7 @@ class Main(KytosNApp):
 
         for installed_flow in switch.flows:
 
-            # Check if the flow are in the ignored flow list
+            # Check if the flow is in the ignored flow list
             if self.consistency_ignored_check(installed_flow):
                 continue
 
