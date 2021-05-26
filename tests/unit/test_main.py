@@ -303,7 +303,7 @@ class TestMain(TestCase):
         self.napp._load_flows()
         mock_storehouse.assert_called()
 
-    @patch("napps.kytos.flow_manager.main.CONSISTENCY_INTERVAL", -1)
+    @patch("napps.kytos.flow_manager.main.ENABLE_CONSISTENCY_CHECK", False)
     @patch("napps.kytos.flow_manager.main.Main._install_flows")
     def test_resend_stored_flows(self, mock_install_flows):
         """Test resend stored flows."""

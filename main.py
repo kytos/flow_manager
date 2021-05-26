@@ -15,8 +15,9 @@ from napps.kytos.flow_manager.storehouse import StoreHouse
 from napps.kytos.of_core.flow import FlowFactory
 
 from .exceptions import InvalidCommandError
-from .settings import (CONSISTENCY_COOKIE_IGNORED_RANGE, CONSISTENCY_INTERVAL,
-                       CONSISTENCY_TABLE_ID_IGNORED_RANGE, FLOWS_DICT_MAX_SIZE)
+from .settings import (CONSISTENCY_COOKIE_IGNORED_RANGE,
+                       CONSISTENCY_TABLE_ID_IGNORED_RANGE,
+                       ENABLE_CONSISTENCY_CHECK, FLOWS_DICT_MAX_SIZE)
 
 
 def cast_fields(flow_dict):
@@ -95,8 +96,6 @@ class Main(KytosNApp):
         #                                      'flow': {flow_dict}}]}}}
         self.stored_flows = {}
         self.resent_flows = set()
-        if CONSISTENCY_INTERVAL > 0:
-            self.execute_as_loop(CONSISTENCY_INTERVAL)
 
     def execute(self):
         """Run once on NApp 'start' or in a loop.
@@ -106,9 +105,6 @@ class Main(KytosNApp):
         """
         self._load_flows()
 
-        if CONSISTENCY_INTERVAL > 0:
-            self.consistency_check()
-
     def shutdown(self):
         """Shutdown routine of the NApp."""
         log.debug("flow-manager stopping")
@@ -117,7 +113,7 @@ class Main(KytosNApp):
     def resend_stored_flows(self, event):
         """Resend stored Flows."""
         # if consistency check is enabled, it should take care of this
-        if CONSISTENCY_INTERVAL >= 0:
+        if ENABLE_CONSISTENCY_CHECK:
             return
         switch = event.content['switch']
         dpid = str(switch.dpid)
@@ -167,17 +163,16 @@ class Main(KytosNApp):
             return True
         return False
 
-    def consistency_check(self):
-        """Check the consistency of flows in each switch."""
-        switches = self.controller.switches.values()
-
-        for switch in switches:
-            # Check if a dpid is a key in 'stored_flows' dictionary
-            if switch.is_enabled():
-                self.check_storehouse_consistency(switch)
-
-                if switch.dpid in self.stored_flows:
-                    self.check_switch_consistency(switch)
+    @listen_to('kytos/of_core.flow_stats.received')
+    def on_flow_stats_check_consistency(self, event):
+        """Check the consistency of a switch upon receiving flow stats."""
+        if not ENABLE_CONSISTENCY_CHECK:
+            return
+        switch = event.content['switch']
+        if switch.is_enabled():
+            self.check_storehouse_consistency(switch)
+            if switch.dpid in self.stored_flows:
+                self.check_switch_consistency(switch)
 
     def check_switch_consistency(self, switch):
         """Check consistency of installed flows for a specific switch."""
@@ -214,7 +209,7 @@ class Main(KytosNApp):
 
         for installed_flow in switch.flows:
 
-            # Check if the flow are in the ignored flow list
+            # Check if the flow is in the ignored flow list
             if self.consistency_ignored_check(installed_flow):
                 continue
 

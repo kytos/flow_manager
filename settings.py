@@ -4,7 +4,7 @@ STATS_INTERVAL = 30
 FLOWS_DICT_MAX_SIZE = 10000
 # Time (in seconds) to wait retrieve box from storehouse
 BOX_RESTORE_TIMER = 0.1
-CONSISTENCY_INTERVAL = 60
+ENABLE_CONSISTENCY_CHECK = True
 
 # List of flows ignored by the consistency check
 # To filter by a cookie or `table_id` use [value]
