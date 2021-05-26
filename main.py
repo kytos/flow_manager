@@ -15,7 +15,8 @@ from napps.kytos.flow_manager.storehouse import StoreHouse
 from napps.kytos.of_core.flow import FlowFactory
 
 from .exceptions import InvalidCommandError
-from .settings import CONSISTENCY_INTERVAL, FLOWS_DICT_MAX_SIZE
+from .settings import (CONSISTENCY_COOKIE_IGNORED_RANGE, CONSISTENCY_INTERVAL,
+                       CONSISTENCY_TABLE_ID_IGNORED_RANGE, FLOWS_DICT_MAX_SIZE)
 
 
 def cast_fields(flow_dict):
@@ -26,6 +27,44 @@ def cast_fields(flow_dict):
             match[field] = int(value)
     flow_dict['match'] = match
     return flow_dict
+
+
+def _validate_range(values):
+    """Check that the range of flows ignored by the consistency is valid."""
+    if len(values) != 2:
+        msg = f'The tuple must have 2 items, not {len(values)}'
+        raise ValueError(msg)
+    first, second = values
+    if second < first:
+        msg = f'The first value is bigger than the second: {values}'
+        raise ValueError(msg)
+    if not isinstance(first, int) or not isinstance(second, int):
+        msg = f'Expected a tuple of integers, received {values}'
+        raise TypeError(msg)
+
+
+def _valid_consistency_ignored(consistency_ignored_list):
+    """Check the format of the list of ignored consistency flows.
+
+    Check that the list of ignored flows in the consistency check
+    is well formatted. Returns True, if the list is well
+    formatted, otherwise return False.
+    """
+    msg = ('The list of ignored flows in the consistency check'
+           'is not well formatted, it will be ignored: %s')
+    for consistency_ignored in consistency_ignored_list:
+        if isinstance(consistency_ignored, tuple):
+            try:
+                _validate_range(consistency_ignored)
+            except (TypeError, ValueError) as error:
+                log.warn(msg, error)
+                return False
+        elif not isinstance(consistency_ignored, (int, tuple)):
+            error_msg = ('The elements must be of class int or tuple'
+                         f' but they are: {type(consistency_ignored)}')
+            log.warn(msg, error_msg)
+            return False
+    return True
 
 
 class Main(KytosNApp):
@@ -40,6 +79,12 @@ class Main(KytosNApp):
         log.debug("flow-manager starting")
         self._flow_mods_sent = OrderedDict()
         self._flow_mods_sent_max_size = FLOWS_DICT_MAX_SIZE
+        self.cookie_ignored_range = []
+        self.tab_id_ignored_range = []
+        if _valid_consistency_ignored(CONSISTENCY_COOKIE_IGNORED_RANGE):
+            self.cookie_ignored_range = CONSISTENCY_COOKIE_IGNORED_RANGE
+        if _valid_consistency_ignored(CONSISTENCY_TABLE_ID_IGNORED_RANGE):
+            self.tab_id_ignored_range = CONSISTENCY_TABLE_ID_IGNORED_RANGE
 
         # Storehouse client to save and restore flow data:
         self.storehouse = StoreHouse(self.controller)
@@ -89,6 +134,39 @@ class Main(KytosNApp):
             self.resent_flows.add(dpid)
             log.info(f'Flows resent to Switch {dpid}')
 
+    @staticmethod
+    def is_ignored(field, ignored_range):
+        """Check that the flow field is in the range of ignored flows.
+
+        Returns True, if the field is in the range of ignored flows,
+        otherwise it returns False.
+        """
+        for i in ignored_range:
+            if isinstance(i, tuple):
+                start_range, end_range = i
+                if start_range <= field <= end_range:
+                    return True
+            if isinstance(i, int):
+                if field == i:
+                    return True
+        return False
+
+    def consistency_ignored_check(self, flow):
+        """Check if the flow is in the list of flows ignored by consistency.
+
+        Check by `cookie` range and `table_id` range.
+        Return True if the flow is in the ignored range, otherwise return
+        False.
+        """
+        # Check by cookie
+        if self.is_ignored(flow.cookie, self.cookie_ignored_range):
+            return True
+
+        # Check by `table_id`
+        if self.is_ignored(flow.table_id, self.tab_id_ignored_range):
+            return True
+        return False
+
     def consistency_check(self):
         """Check the consistency of flows in each switch."""
         switches = self.controller.switches.values()
@@ -135,6 +213,11 @@ class Main(KytosNApp):
         dpid = switch.dpid
 
         for installed_flow in switch.flows:
+
+            # Check if the flow are in the ignored flow list
+            if self.consistency_ignored_check(installed_flow):
+                continue
+
             if dpid not in self.stored_flows:
                 log.info('A consistency problem was detected in '
                          f'switch {dpid}.')
