@@ -22,30 +22,30 @@ Security
 ========
 
 
-[4.0] - 2021-05-26
+[4.0] - 2021-05-27
 ******************
 Added
 =====
- - Added support to handle with OpenFlow error OFPBAC_BAD_OUT_PORT.
- - Added attempt limits to try to recover box from storehouse, avoiding
-   a possible thread lock condition.
- - Added consistency mechanism information in README file.
- - Added support for non-strict exclusion in the consistency check.
- - Add support for the list of exceptions in the consistency mechanism.
- - Add validation to data sent by REST endpoints in requests to install flows.
- - Add support for install or remove flows in the switches using Kytos Events.
+- Added support to handle with OpenFlow error ``OFPBAC_BAD_OUT_PORT``.
+- Added attempt limits to try to recover box from storehouse, avoiding
+  a possible thread lock condition.
+- Added consistency mechanism information in README file.
+- Added support for non-strict exclusion in the consistency check.
+- Add support for the list of exceptions in the consistency mechanism.
+- Add validation to data sent by REST endpoints in requests to install flows.
+- Add support for install or remove flows in the switches using Kytos Events.
 
 Changed
 =======
- - Update consistency check to use ``DELETE_STRICT`` to remove 'alien' flows in
-   switches.
- - Consistency check routine to recreate the flows when the switch reconnects 
-   to Kytos.
+- Update consistency check to use ``DELETE_STRICT`` to remove 'alien' flows in
+  switches.
+- Consistency check routine to recreate the flows when the switch reconnects 
+  to Kytos.
 
 Fixed
 =====
- - New method to cast ``UBInt`` type to int to solve JSON serialization error.
- - Fix the HTTP status code returned when the switch is not found.
+- New method to cast ``UBInt`` type to int to solve JSON serialization error.
+- Fix the HTTP status code returned when the switch is not found.
 
  
 [3.0] - 2020-12-23
